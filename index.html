@@ -133,6 +133,20 @@
         padding: 0.4rem 0.8rem;
         cursor: pointer;
       }
+      .desktop-notes {
+        max-width: 640px;
+        margin: 0.9rem auto 0;
+        text-align: left;
+        font-size: 0.8rem;
+        color: var(--ink-dim);
+      }
+      .desktop-notes code {
+        font-family: ui-monospace, Menlo, Consolas, monospace;
+        font-size: 0.78rem;
+        background: rgba(0, 0, 0, 0.25);
+        padding: 0.1rem 0.25rem;
+        border-radius: 4px;
+      }
     </style>
   </head>
   <body>
@@ -170,13 +184,90 @@
       </div>
     </main>
 
+    <section
+      style="
+        text-align: center;
+        padding: 1.6rem;
+        border-top: 1px solid var(--line);
+      "
+    >
+      <h2
+        style="color: var(--accent); font-size: 1.1rem; margin-bottom: 0.6rem"
+      >
+        Desktop App
+      </h2>
+      <p
+        style="color: var(--ink-dim); font-size: 0.9rem; margin-bottom: 0.8rem"
+      >
+        Prefer an offline version? Download ClaritySuite for Mac or Linux.
+        Windows version coming soon.
+      </p>
+      <a
+        class="button"
+        href="https://github.com/mnani87/claritysuite-desktop/releases/download/v0.1/ClaritySuite-mac.zip"
+        >⬇ Download for macOS (v0.1)</a
+      >
+
+      <div class="desktop-notes">
+        <strong>Install steps (macOS, unsigned app):</strong>
+        <ol style="margin: 0.6rem 0 0.4rem 1.2rem; padding: 0">
+          <li>Download the ZIP and wait for it to finish.</li>
+          <li>Unzip it to get <code>ClaritySuite.app</code>.</li>
+          <li>
+            Move <code>ClaritySuite.app</code> into your
+            <code>Applications</code> folder.
+          </li>
+          <li>
+            If macOS says the app is “damaged” or blocks it, run this once in
+            Terminal:
+            <div style="margin: 0.3rem 0">
+              <code>xattr -cr ~/Downloads/ClaritySuite.app</code>
+            </div>
+            Then open it again. On first launch you can also right-click the
+            app, choose <em>Open</em>, and confirm. ClaritySuite is a
+            local-only, unsigned app. macOS shows this warning only because it’s
+            not from the App Store or notarised.
+          </li>
+        </ol>
+      </div>
+
+      <a
+        class="button"
+        href="https://github.com/mnani87/claritysuite-desktop/releases/download/v0.1/ClaritySuite-0.0.1.AppImage"
+      >
+        <p></p>
+        ⬇ Download for Linux (AppImage) (v0.1)
+      </a>
+
+      <div class="desktop-notes">
+        <strong>Install steps (Linux, AppImage):</strong>
+        <ol style="margin: 0.6rem 0 0.4rem 1.2rem; padding: 0">
+          <li>Download the AppImage file.</li>
+          <li>
+            Make it executable:
+            <div style="margin: 0.3rem 0">
+              <code>chmod +x ClaritySuite-0.0.1.AppImage</code>
+            </div>
+          </li>
+          <li>
+            Run it by double-clicking, or from a terminal:
+            <div style="margin: 0.3rem 0">
+              <code>./ClaritySuite-0.0.1.AppImage</code>
+            </div>
+            The AppImage is self-contained and runs on most Linux distributions.
+            No installation, root access, or dependencies are required.
+          </li>
+        </ol>
+      </div>
+    </section>
+
     <section class="local">
       <p>
         All ClaritySuite tools are <strong>local-first</strong>: they run
-        entirely in your browser, with
+        entirely on your device, with
         <strong>no servers, telemetry, or cloud dependencies</strong>. Your
         data, preferences, and progress stay
-        <strong>only on your device</strong>.
+        <strong>only on your machine</strong>.
       </p>
     </section>
 
