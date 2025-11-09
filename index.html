@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ClaritySuite · Calm Tools for Work & Play</title>
+    <link rel="icon" href="favicon.svg" />
+    <style>
+      :root {
+        --bg: #0f1113;
+        --panel: #13161a;
+        --ink: #eaeaea;
+        --ink-dim: #a7abb0;
+        --accent: #a7d0b1;
+        --accent2: #c8b39a;
+        --line: rgba(255, 255, 255, 0.12);
+        --shadow: 0 4px 18px rgba(0, 0, 0, 0.3);
+        --r-lg: 18px;
+        font-family: "Optima", "Palatino", "Book Antiqua", "Georgia", serif;
+      }
+      [data-theme="light"] {
+        --bg: #f7f5ef;
+        --panel: #ffffff;
+        --ink: #1e2328;
+        --ink-dim: #6b6f73;
+        --accent: #4e6b50;
+        --accent2: #7a5e3e;
+        --line: rgba(0, 0, 0, 0.12);
+        --shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+        line-height: 1.6;
+      }
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1rem 1.2rem;
+        border-bottom: 1px solid var(--line);
+        box-shadow: var(--shadow);
+      }
+      .brand h1 {
+        font-size: 1.2rem;
+        color: var(--accent);
+        margin: 0;
+        text-shadow: 0 0 8px rgba(0, 255, 255, 0.3);
+      }
+      .brand .sub {
+        font-size: 0.85rem;
+        color: var(--ink-dim);
+      }
+      main {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 1.2rem;
+        width: 100%;
+        max-width: 900px;
+      }
+      .card {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: var(--r-lg);
+        box-shadow: var(--shadow);
+        padding: 1.2rem;
+        text-align: center;
+        transition: 0.25s;
+      }
+      .card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 4px 20px rgba(0, 255, 255, 0.15);
+      }
+      .card h2 {
+        margin: 0.3rem 0;
+        font-size: 1.1rem;
+        color: var(--accent);
+      }
+      .card p {
+        font-size: 0.9rem;
+        color: var(--ink-dim);
+        margin-top: 0.2rem;
+      }
+      a.button {
+        display: inline-block;
+        margin-top: 0.7rem;
+        padding: 0.45rem 0.9rem;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        text-decoration: none;
+        color: var(--ink);
+        background: var(--bg);
+        font-family: ui-monospace, Menlo, Consolas, monospace;
+        transition: 0.2s;
+      }
+      a.button:hover {
+        border-color: var(--accent);
+        box-shadow: 0 0 6px var(--accent);
+      }
+      section.local {
+        text-align: center;
+        padding: 1.4rem;
+        color: var(--ink-dim);
+        font-size: 0.9rem;
+        border-top: 1px solid var(--line);
+        border-bottom: 1px solid var(--line);
+        background: var(--panel);
+      }
+      footer {
+        border-top: 1px solid var(--line);
+        text-align: center;
+        padding: 0.8rem;
+        color: var(--ink-dim);
+        font-size: 0.85rem;
+      }
+      #themeToggle {
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: var(--bg);
+        color: var(--ink);
+        font-size: 0.85rem;
+        padding: 0.4rem 0.8rem;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="brand">
+        <h1>ClaritySuite</h1>
+        <div class="sub">Tools for Focus, Craft, and Calm</div>
+      </div>
+      <button id="themeToggle">Theme</button>
+    </header>
+
+    <main>
+      <div class="grid">
+        <div class="card">
+          <h2>ClarityForge</h2>
+          <p>Fast tools for text transformation and data wrangling.</p>
+          <a class="button" href="https://clarityforge.show" target="_blank"
+            >Open Forge →</a
+          >
+        </div>
+        <div class="card">
+          <h2>ClarityHub</h2>
+          <p>Productivity, journaling, and daily-planning system.</p>
+          <a class="button" href="https://clarityhub.show" target="_blank"
+            >Open Hub →</a
+          >
+        </div>
+        <div class="card">
+          <h2>ClarityToybox</h2>
+          <p>Calm games for reflection, rest, and mental reset.</p>
+          <a class="button" href="https://claritytoybox.show" target="_blank"
+            >Open Toybox →</a
+          >
+        </div>
+      </div>
+    </main>
+
+    <section class="local">
+      <p>
+        All ClaritySuite tools are <strong>local-first</strong>: they run
+        entirely in your browser, with
+        <strong>no servers, telemetry, or cloud dependencies</strong>. Your
+        data, preferences, and progress stay
+        <strong>only on your device</strong>.
+      </p>
+    </section>
+
+    <footer>
+      <div>
+        ClaritySuite v0.1, released on 9 November 2025. <br />
+        © 2025, MCN. All ClaritySuite apps are free for personal use.
+      </div>
+    </footer>
+
+    <script>
+      const btn = document.getElementById("themeToggle");
+      btn.onclick = () => {
+        const curr =
+          document.documentElement.getAttribute("data-theme") || "dark";
+        const next = curr === "light" ? "dark" : "light";
+        document.documentElement.setAttribute("data-theme", next);
+        localStorage.setItem("claritysuite_theme", next);
+      };
+      const saved = localStorage.getItem("claritysuite_theme");
+      if (saved) document.documentElement.setAttribute("data-theme", saved);
+    </script>
+  </body>
+</html>
