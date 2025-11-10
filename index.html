@@ -181,6 +181,14 @@
             >Open Toybox →</a
           >
         </div>
+        <div class="card">
+          <h2>ClarityEditor</h2>
+          <p>Distraction-free, local-first writing and note-taking.</p>
+          <!-- Update this URL if you use a different domain for the web editor -->
+          <a class="button" href="https://clarityeditor.show" target="_blank"
+            >Open Editor →</a
+          >
+        </div>
       </div>
     </main>
 
@@ -194,28 +202,43 @@
       <h2
         style="color: var(--accent); font-size: 1.1rem; margin-bottom: 0.6rem"
       >
-        Desktop App
+        Desktop Apps
       </h2>
       <p
         style="color: var(--ink-dim); font-size: 0.9rem; margin-bottom: 0.8rem"
       >
-        Prefer an offline version? Download ClaritySuite for Mac or Linux.
-        Windows version coming soon.
+        Prefer offline versions? Download ClaritySuite (Hub / Forge / Toybox)
+        and ClarityEditor for macOS or Linux. Windows versions are planned.
       </p>
+
+      <!-- ClaritySuite desktop (combined app) -->
+      <h3
+        style="
+          color: var(--accent2);
+          font-size: 0.95rem;
+          margin-top: 1rem;
+          margin-bottom: 0.4rem;
+        "
+      >
+        ClaritySuite Desktop (Hub · Forge · Toybox)
+      </h3>
       <a
         class="button"
         href="https://github.com/mnani87/claritysuite-desktop/releases/download/v0.1/ClaritySuite-mac.zip"
-        >⬇ Download for macOS (v0.1)</a
       >
+        ⬇ Download for macOS (v0.1)
+      </a>
 
       <div class="desktop-notes">
         <strong>Install steps (macOS, unsigned app):</strong>
         <ol style="margin: 0.6rem 0 0.4rem 1.2rem; padding: 0">
-          <li>Download the ZIP and wait for it to finish.</li>
-          <li>Unzip it to get <code>ClaritySuite.app</code>.</li>
           <li>
-            Move <code>ClaritySuite.app</code> into your
-            <code>Applications</code> folder.
+            Download the ZIP and wait for the download to finish completely.
+          </li>
+          <li>
+            Unzip it to get <code>ClaritySuite.app</code>. Double-click to open.
+            On first launch you can also right-click the app, choose
+            <em>Open</em>, and confirm.
           </li>
           <li>
             If macOS says the app is “damaged” or blocks it, run this once in
@@ -223,10 +246,14 @@
             <div style="margin: 0.3rem 0">
               <code>xattr -cr ~/Downloads/ClaritySuite.app</code>
             </div>
-            Then open it again. On first launch you can also right-click the
-            app, choose <em>Open</em>, and confirm. ClaritySuite is a
-            local-only, unsigned app. macOS shows this warning only because it’s
-            not from the App Store or notarised.
+            Then open it again. (ClaritySuite is a local-only, unsigned app.
+            macOS shows the "damaged" warning only because the app is not from
+            the App Store or notarised.)
+          </li>
+          <li>
+            Move
+            <code>ClaritySuite.app</code> into your
+            <code>Applications</code> folder.
           </li>
         </ol>
       </div>
@@ -235,7 +262,6 @@
         class="button"
         href="https://github.com/mnani87/claritysuite-desktop/releases/download/v0.1/ClaritySuite-0.0.1.AppImage"
       >
-        <p></p>
         ⬇ Download for Linux (AppImage) (v0.1)
       </a>
 
@@ -253,6 +279,94 @@
             Run it by double-clicking, or from a terminal:
             <div style="margin: 0.3rem 0">
               <code>./ClaritySuite-0.0.1.AppImage</code>
+            </div>
+            The AppImage is self-contained and runs on most Linux distributions.
+            No installation, root access, or dependencies are required.
+          </li>
+        </ol>
+      </div>
+
+      <!-- Divider between suite and editor desktop apps -->
+      <hr
+        style="
+          border: none;
+          border-top: 1px dashed var(--line);
+          margin: 1.4rem auto;
+          max-width: 520px;
+        "
+      />
+
+      <!-- ClarityEditor desktop (its own app) -->
+      <h3
+        style="
+          color: var(--accent2);
+          font-size: 0.95rem;
+          margin-top: 0.6rem;
+          margin-bottom: 0.4rem;
+        "
+      >
+        ClarityEditor Desktop (Standalone)
+      </h3>
+
+      <!-- TODO: replace these href values with your actual ClarityEditor release URLs -->
+      <a
+        class="button"
+        href="https://github.com/mnani87/clarityeditor-desktop/releases/download/v0.1/ClarityEditor-0.1.0-mac.zip"
+        title="Replace # with your ClarityEditor macOS .dmg or .zip URL"
+      >
+        ⬇ Download ClarityEditor for macOS (v0.1)
+      </a>
+
+      <div class="desktop-notes">
+        <strong>Install steps (macOS, unsigned app):</strong>
+        <ol style="margin: 0.6rem 0 0.4rem 1.2rem; padding: 0">
+          <li>
+            Download the ZIP and wait for the download to finish completely.
+          </li>
+          <li>
+            Unzip it to get <code>ClarityEditor.app</code>. Double-click to
+            open. On first launch you can also right-click the app, choose
+            <em>Open</em>, and confirm.
+          </li>
+          <li>
+            If macOS says the app is “damaged” or blocks it, run this once in
+            Terminal:
+            <div style="margin: 0.3rem 0">
+              <code>xattr -cr ~/Downloads/ClarityEditor.app</code>
+            </div>
+            Then open it again. (ClarityEditor is a local-only, unsigned app.
+            macOS shows the "damaged" warning only because the app is not from
+            the App Store or notarised.)
+          </li>
+          <li>
+            Move
+            <code>ClarityEditor.app</code> into your
+            <code>Applications</code> folder.
+          </li>
+        </ol>
+      </div>
+      <a
+        class="button"
+        href="https://github.com/mnani87/clarityeditor-desktop/releases/download/v0.1/ClarityEditor-0.1.0-arm64.AppImage"
+        title="Replace # with your ClarityEditor Linux AppImage URL"
+      >
+        ⬇ Download ClarityEditor for Linux (AppImage, v0.1)
+      </a>
+
+      <div class="desktop-notes">
+        <strong>Install steps (Linux, AppImage):</strong>
+        <ol style="margin: 0.6rem 0 0.4rem 1.2rem; padding: 0">
+          <li>Download the ClarityEditor AppImage file.</li>
+          <li>
+            Make it executable:
+            <div style="margin: 0.3rem 0">
+              <code>chmod +x ClarityEditor-0.1.0-arm64.AppImage</code>
+            </div>
+          </li>
+          <li>
+            Run it by double-clicking, or from a terminal:
+            <div style="margin: 0.3rem 0">
+              <code>./ClarityEditor-0.1.0-arm64.AppImage</code>
             </div>
             The AppImage is self-contained and runs on most Linux distributions.
             No installation, root access, or dependencies are required.
