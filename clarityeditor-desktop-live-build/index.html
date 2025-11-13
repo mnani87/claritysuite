@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ClarityEditor</title>
+
+    <style>
+      /* --- ClaritySuite Theme Variables --- */
+      :root {
+        --bg: #0f1113;
+        --panel: #13161a;
+        --ink: #eaeaea;
+        --ink-dim: #a7abb0;
+        --accent: #a7d0b1;
+        --line: rgba(255, 255, 255, 0.12);
+        --shadow: 0 4px 18px rgba(0, 0, 0, 0.3);
+        --r-sm: 6px;
+        --r-lg: 12px;
+        font-family: "Optima", "Palatino", "Book Antiqua", "Georgia", serif;
+      }
+      [data-theme="light"] {
+        --bg: #f7f5ef;
+        --panel: #ffffff;
+        --ink: #1e2328;
+        --ink-dim: #6b6f73;
+        --accent: #4e6b50;
+        --line: rgba(0, 0, 0, 0.12);
+        --shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+      }
+
+      /* --- Base Layout & Fonts --- */
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+        line-height: 1.6;
+      }
+
+      /* --- Header & Actions --- */
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1rem 1.2rem;
+        border-bottom: 1px solid var(--line);
+        background: var(--panel);
+        box-shadow: var(--shadow);
+        flex-shrink: 0;
+      }
+      .brand .tagline {
+        font-size: 0.75rem; /* Smaller than h1 */
+        color: var(--ink-dim); /* Dimmed color */
+        margin: 0;
+        margin-top: -0.3rem; /* Pull it closer to the H1 */
+        font-family: sans-serif; /* Optional: Make it slightly different from the main serif font */
+      }
+      .brand h1 {
+        font-size: 1.2rem;
+        color: var(--accent);
+        margin: 0;
+      }
+
+      .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .header-actions button,
+      .header-actions a {
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: var(--bg);
+        color: var(--ink);
+        font-size: 0.85rem;
+        padding: 0.4rem 0.8rem;
+        cursor: pointer;
+        transition: 0.2s;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .header-actions button:hover,
+      .header-actions a:hover {
+        border-color: var(--accent);
+      }
+
+      /* --- Toolbar Styling --- */
+      .toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 8px 12px;
+        background: var(--panel);
+        border-bottom: 1px solid var(--line);
+        flex-shrink: 0;
+      }
+      .toolbar-group {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding-right: 8px;
+        border-right: 1px solid var(--line);
+      }
+      .toolbar-group:last-child {
+        border-right: none;
+        padding-right: 0;
+      }
+
+      button.tool {
+        border: 1px solid var(--line);
+        background: var(--bg);
+        color: var(--ink);
+        padding: 4px 8px;
+        border-radius: var(--r-sm);
+        font-size: 12px;
+        cursor: pointer;
+        transition: 0.15s;
+      }
+      button.tool:hover {
+        background-color: var(--line);
+        border-color: var(--accent);
+      }
+      button.tool[data-active="true"] {
+        background-color: var(--accent);
+        color: var(--panel);
+        border-color: var(--accent);
+      }
+
+      select {
+        border-radius: var(--r-sm);
+        border: 1px solid var(--line);
+        padding: 4px 6px;
+        font-size: 12px;
+        background: var(--bg);
+        color: var(--ink);
+      }
+
+      input[type="number"] {
+        border-radius: var(--r-sm);
+        border: 1px solid var(--line);
+        padding: 4px 6px;
+        width: 45px;
+        font-size: 12px;
+        background: var(--bg);
+        color: var(--ink);
+      }
+
+      /* --- Editor Area --- */
+      #editor {
+        flex: 1;
+        padding: 24px 40px;
+        margin: 16px auto;
+        max-width: 760px;
+        width: 100%;
+        background: var(--panel);
+        border-radius: var(--r-lg);
+        border: 1px solid var(--line);
+        box-shadow: var(--shadow);
+        box-sizing: border-box;
+        overflow-y: auto;
+        font-size: 14px;
+        min-height: 400px;
+      }
+
+      #editor:focus {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
+      #editor p {
+        margin: 0 0 6px 0;
+        min-height: 1em;
+      }
+
+      /* --- Status Bar --- */
+      #status {
+        font-size: 11px;
+        color: var(--ink-dim);
+        padding: 4px 12px 6px;
+        border-top: 1px solid var(--line);
+        background: var(--panel);
+        flex-shrink: 0;
+      }
+
+      /* --- Footer --- */
+      footer {
+        text-align: center;
+        padding: 12px 16px 16px;
+        font-size: 11px;
+        color: var(--ink-dim);
+        background: var(--panel);
+        border-top: 1px solid var(--line);
+        flex-shrink: 0;
+      }
+      footer a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+      footer a:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="brand">
+        <h1>ClarityEditor</h1>
+        <p class="tagline">
+          Distraction-Free Writing. No server, no cloud dependencies. Your data
+          remains only on your device.
+        </p>
+      </div>
+      <div class="header-actions">
+        <a
+          href="https://claritybase.app"
+          target="_blank"
+          rel="noopener"
+          id="clarityHomeLink"
+        >
+          ClaritySuite Home
+        </a>
+        <button id="btnInfo">Info</button>
+        <button id="themeToggle">Theme</button>
+      </div>
+    </header>
+    <div class="toolbar">
+      <div class="toolbar-group">
+        <button class="tool" data-cmd="bold" data-toggle="state-bold">
+          <b>B</b>
+        </button>
+        <button class="tool" data-cmd="italic" data-toggle="state-italic">
+          <i>I</i>
+        </button>
+        <button class="tool" data-cmd="underline" data-toggle="state-underline">
+          <u>U</u>
+        </button>
+      </div>
+
+      <div class="toolbar-group">
+        <button
+          class="tool"
+          data-cmd="justifyleft"
+          data-align="left"
+          data-toggle="state-align-left"
+        >
+          L
+        </button>
+        <button
+          class="tool"
+          data-cmd="justifycenter"
+          data-align="center"
+          data-toggle="state-align-center"
+        >
+          C
+        </button>
+        <button
+          class="tool"
+          data-cmd="justifyright"
+          data-align="right"
+          data-toggle="state-align-right"
+        >
+          R
+        </button>
+        <button
+          class="tool"
+          data-cmd="justifyfull"
+          data-align="justify"
+          data-toggle="state-align-justify"
+        >
+          J
+        </button>
+      </div>
+
+      <div class="toolbar-group">
+        <button class="tool" data-cmd="insertUnorderedList">• List</button>
+        <button class="tool" data-cmd="insertOrderedList">1. List</button>
+      </div>
+
+      <div class="toolbar-group">
+        <label style="font-size: 12px">Font</label>
+        <select id="fontFamily">
+          <option value="Charter">Charter</option>
+          <option value="Palatino" selected>Palatino</option>
+          <option value="Times New Roman">Times New Roman</option>
+          <option value="Georgia">Georgia</option>
+          <option value="Helvetica">Helvetica</option>
+          <option value="Arial">Arial</option>
+        </select>
+
+        <label style="font-size: 12px">Size</label>
+        <select id="fontSize">
+          <option value="3">12</option>
+          <option value="4" selected>14</option>
+          <option value="5">18</option>
+          <option value="6">24</option>
+        </select>
+      </div>
+
+      <div class="toolbar-group">
+        <label style="font-size: 12px">Line</label>
+        <select id="lineHeight">
+          <option value="1.0">1.0</option>
+          <option value="1.15" selected>1.15</option>
+          <option value="1.3">1.3</option>
+          <option value="1.5">1.5</option>
+          <option value="2.0">2.0</option>
+        </select>
+      </div>
+
+      <div class="toolbar-group">
+        <label style="font-size: 12px">P Before</label>
+        <input type="number" id="pBefore" value="6" min="0" max="50" />
+        <label style="font-size: 12px">P After</label>
+        <input type="number" id="pAfter" value="6" min="0" max="50" />
+      </div>
+
+      <div class="toolbar-group">
+        <button class="tool" id="btnInsertTable">Table</button>
+      </div>
+
+      <div class="toolbar-group">
+        <button class="tool" id="btnOpen">Open…</button>
+        <button class="tool" id="btnSaveHtml">Save HTML</button>
+        <button class="tool" id="btnSaveAs">Save As…</button>
+        <button class="tool" id="btnSaveTxt">Save TXT</button>
+        <button class="tool" id="btnSaveMd">Save MD</button>
+        <input
+          type="file"
+          id="fileInput"
+          style="display: none"
+          accept=".html,.htm,.txt,.md"
+        />
+      </div>
+    </div>
+
+    <div id="editor" contenteditable="true">
+      <p>ClarityEditor. Start typing.</p>
+    </div>
+
+    <div id="status">Ready</div>
+
+    <footer>
+      <h5>
+        ClarityEditor v0.1, released 10 Nov 2025.<br />
+        © 2025, MCN. ClarityEditor is free for personal use. This app is part of
+        <a href="https://claritybase.app" target="_blank" rel="noopener"
+          >ClaritySuite</a
+        >.
+      </h5>
+    </footer>
+
+    <script>
+      const editor = document.getElementById("editor");
+      const statusEl = document.getElementById("status");
+      const fileInput = document.getElementById("fileInput");
+      const lineHeightSelect = document.getElementById("lineHeight");
+      const pBeforeInput = document.getElementById("pBefore");
+      const pAfterInput = document.getElementById("pAfter");
+      const themeToggleBtn = document.getElementById("themeToggle");
+      const fontFamilySelect = document.getElementById("fontFamily");
+      const fontSizeSelect = document.getElementById("fontSize");
+      const btnInfo = document.getElementById("btnInfo");
+
+      // --- State Management ---
+      let currentFilePath = null; // Electron IPC path
+      let currentFileHandle = null; // Browser File System Access handle
+      let currentFileType = null; // 'html' | 'txt' | 'md' | null
+      let modified = false;
+
+      const useNative = typeof window.electronAPI !== "undefined";
+      const supportsFileSystemAccess =
+        "showOpenFilePicker" in window && "showSaveFilePicker" in window;
+
+      /* --- Theme toggle --- */
+      const applyTheme = (theme) => {
+        document.documentElement.setAttribute("data-theme", theme);
+        localStorage.setItem("claritysuite_theme", theme);
+      };
+
+      themeToggleBtn.onclick = () => {
+        const curr =
+          document.documentElement.getAttribute("data-theme") || "dark";
+        const next = curr === "light" ? "dark" : "light";
+        applyTheme(next);
+      };
+
+      const savedTheme = localStorage.getItem("claritysuite_theme");
+      if (savedTheme) applyTheme(savedTheme);
+
+      /* --- App Info/Help --- */
+      function showAppInfo() {
+        const infoMessage = `
+ClarityEditor v0.1 (Released 10 Nov 2025)
+© 2025, MCN. Free for personal use.
+
+--- File Saving ---
+1. SAVE HTML / SAVE AS: Saves the rich text formatting, styles, lists, and tables. This is the recommended rich text format.
+2. SAVE TXT: Strips all formatting and saves only the plain text content.
+3. SAVE MD: Performs a MINIMAL conversion of rich text (Bold, Italic, basic Lists) to Markdown syntax. Note: Advanced formatting (tables/headers) is not preserved.
+
+--- Environment ---
+The app uses native file dialogs in Electron and the local-first File System Access API in modern web browsers.
+        `.trim();
+        alert(infoMessage);
+      }
+      if (btnInfo) {
+        btnInfo.addEventListener("click", showAppInfo);
+      }
+
+      /* --- Core exec helper --- */
+      function exec(cmd, val = null) {
+        document.execCommand(cmd, false, val);
+        editor.focus();
+        updateToolbarState();
+      }
+
+      /* --- Block detection --- */
+      function getCurrentBlockElement() {
+        const selection = window.getSelection();
+        if (!selection.rangeCount) return null;
+        let node = selection.getRangeAt(0).startContainer;
+
+        while (node && node !== editor) {
+          if (
+            node.nodeType === 1 &&
+            (node.tagName === "P" ||
+              node.tagName === "DIV" ||
+              node.tagName === "LI")
+          ) {
+            return node;
+          }
+          node = node.parentNode;
+        }
+        return null;
+      }
+
+      /* --- Spacing functions --- */
+      function setLineHeight(height) {
+        const block = getCurrentBlockElement();
+        if (block) {
+          block.style.lineHeight = height;
+        } else {
+          editor.style.lineHeight = height;
+        }
+        editor.focus();
+      }
+
+      function setParagraphSpacing() {
+        const before = pBeforeInput.value + "px";
+        const after = pAfterInput.value + "px";
+        const block = getCurrentBlockElement();
+
+        if (block) {
+          block.style.marginTop = before;
+          block.style.marginBottom = after;
+        } else {
+          document.querySelectorAll("#editor p").forEach((p) => {
+            p.style.marginTop = before;
+            p.style.marginBottom = after;
+          });
+        }
+        editor.focus();
+      }
+
+      /* --- Insert table --- */
+      document
+        .getElementById("btnInsertTable")
+        .addEventListener("click", () => {
+          const rows = parseInt(prompt("Rows?", "2"), 10);
+          const cols = parseInt(prompt("Columns?", "2"), 10);
+          if (!rows || !cols) return;
+          let html =
+            '<table style="border-collapse:collapse;width:100%;"><tbody>';
+          for (let r = 0; r < rows; r++) {
+            html += "<tr>";
+            for (let c = 0; c < cols; c++) {
+              html +=
+                '<td style="border:1px solid #666;padding:4px;min-width:50px;">&nbsp;</td>';
+            }
+            html += "</tr>";
+          }
+          html += "</tbody></table><p></p>";
+          exec("insertHTML", html);
+        });
+
+      /* --- Status / word count --- */
+      editor.addEventListener("input", () => {
+        modified = true;
+        updateStatus();
+      });
+
+      function updateStatus(message = "") {
+        const text = editor.innerText || "";
+        const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+        let statusText = `${modified ? "• " : ""}Words: ${words}`;
+        if (message) statusText += ` (${message})`;
+        statusEl.textContent = statusText;
+      }
+
+      /* --- Minimal HTML → Markdown conversion --- */
+      function convertHtmlToMarkdown(htmlContent) {
+        const tempDiv = document.createElement("div");
+        tempDiv.innerHTML = htmlContent;
+
+        let markdown = tempDiv.innerHTML;
+        markdown = markdown.replace(/<br\s*\/?>/gi, "\n");
+        markdown = markdown
+          .replace(/<\/p>/gi, "\n\n")
+          .replace(/<p[^>]*>/gi, "");
+        markdown = markdown
+          .replace(/<\s*(b|strong)[^>]*>/gi, "**")
+          .replace(/<\s*\/\s*(b|strong)\s*>/gi, "**");
+        markdown = markdown
+          .replace(/<\s*(i|em)[^>]*>/gi, "*")
+          .replace(/<\s*\/\s*(i|em)\s*>/gi, "*");
+        markdown = markdown.replace(
+          /<ul[^>]*>([\s\S]*?)<\/ul>/gi,
+          (match, inner) =>
+            inner.replace(
+              /<li[^>]*>([\s\S]*?)<\/li>/gi,
+              (_, item) => "\n* " + item.trim()
+            )
+        );
+        markdown = markdown.replace(
+          /<ol[^>]*>([\s\S]*?)<\/ol>/gi,
+          (match, inner) => {
+            let count = 1;
+            return inner.replace(
+              /<li[^>]*>([\s\S]*?)<\/li>/gi,
+              (_, item) => "\n" + count++ + ". " + item.trim()
+            );
+          }
+        );
+
+        markdown = markdown.replace(/<\/?[^>]+>/g, "");
+        markdown = markdown.replace(/\n{3,}/g, "\n\n").trim();
+        return markdown;
+      }
+
+      /* --- Download helper (browser fallback) --- */
+      function download(name, content, mime) {
+        const blob = new Blob([content], { type: mime });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = name;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+
+      /* --- Safe command helpers --- */
+      function safeCommandState(cmd) {
+        try {
+          return document.queryCommandState(cmd);
+        } catch {
+          return false;
+        }
+      }
+      function safeCommandValue(cmd) {
+        try {
+          return document.queryCommandValue(cmd);
+        } catch {
+          return "";
+        }
+      }
+
+      /* --- Toolbar active state + selectors --- */
+      function updateToolbarState() {
+        const boldBtn = document.querySelector('[data-toggle="state-bold"]');
+        const italicBtn = document.querySelector(
+          '[data-toggle="state-italic"]'
+        );
+        const underlineBtn = document.querySelector(
+          '[data-toggle="state-underline"]'
+        );
+        if (boldBtn)
+          boldBtn.dataset.active = safeCommandState("bold") ? "true" : "false";
+        if (italicBtn)
+          italicBtn.dataset.active = safeCommandState("italic")
+            ? "true"
+            : "false";
+        if (underlineBtn)
+          underlineBtn.dataset.active = safeCommandState("underline")
+            ? "true"
+            : "false";
+
+        const alignMap = {
+          "state-align-left": "justifyleft",
+          "state-align-center": "justifycenter",
+          "state-align-right": "justifyright",
+          "state-align-justify": "justifyfull",
+        };
+        Object.entries(alignMap).forEach(([toggleName, cmd]) => {
+          const btn = document.querySelector(`[data-toggle="${toggleName}"]`);
+          if (btn)
+            btn.dataset.active = safeCommandState(cmd) ? "true" : "false";
+        });
+
+        const fontNameValue = safeCommandValue("fontName").replace(/["']/g, "");
+        if (fontNameValue && fontFamilySelect) {
+          for (let i = 0; i < fontFamilySelect.options.length; i++) {
+            const opt = fontFamilySelect.options[i];
+            if (opt.value.toLowerCase() === fontNameValue.toLowerCase()) {
+              fontFamilySelect.value = opt.value;
+              break;
+            }
+          }
+        }
+
+        const fontSizeValue = safeCommandValue("fontSize");
+        if (fontSizeValue && fontSizeSelect) {
+          for (let i = 0; i < fontSizeSelect.options.length; i++) {
+            const opt = fontSizeSelect.options[i];
+            if (opt.value === String(fontSizeValue)) {
+              fontSizeSelect.value = opt.value;
+              break;
+            }
+          }
+        }
+
+        const block = getCurrentBlockElement();
+        if (block) {
+          const lh =
+            block.style.lineHeight ||
+            lineHeightSelect.options[lineHeightSelect.selectedIndex].value;
+          lineHeightSelect.value = lh;
+          const mt =
+            block.style.marginTop.replace("px", "") || pBeforeInput.value;
+          const mb =
+            block.style.marginBottom.replace("px", "") || pAfterInput.value;
+          pBeforeInput.value = mt;
+          pAfterInput.value = mb;
+        }
+      }
+
+      document.addEventListener("selectionchange", () => {
+        const sel = window.getSelection();
+        if (!sel || !sel.anchorNode) return;
+        if (!editor.contains(sel.anchorNode)) return;
+        updateToolbarState();
+      });
+
+      /* --- Toolbar buttons --- */
+      document.querySelectorAll("button.tool[data-cmd]").forEach((btn) => {
+        btn.addEventListener("click", () => exec(btn.dataset.cmd));
+      });
+
+      /* --- Font / size events --- */
+      fontFamilySelect.addEventListener("change", (e) => {
+        if (e.target.value) exec("fontName", e.target.value);
+      });
+
+      fontSizeSelect.addEventListener("change", (e) =>
+        exec("fontSize", e.target.value)
+      );
+
+      /* --- Line / paragraph spacing events --- */
+      lineHeightSelect.addEventListener("change", (e) =>
+        setLineHeight(e.target.value)
+      );
+      pBeforeInput.addEventListener("change", setParagraphSpacing);
+      pAfterInput.addEventListener("change", setParagraphSpacing);
+
+      /* --- File Filters --- */
+      function getFileFilters(type) {
+        if (type === "html")
+          return [{ name: "HTML Document", extensions: ["html", "htm"] }];
+        if (type === "txt")
+          return [{ name: "Plain Text", extensions: ["txt"] }];
+        if (type === "md")
+          return [{ name: "Markdown File", extensions: ["md"] }];
+        return [{ name: "All Files", extensions: ["*"] }];
+      }
+
+      /* --- Open (Electron / FSA / Fallback) --- */
+      async function openFileHandler() {
+        if (useNative) {
+          const result = await window.electronAPI.openFile();
+          if (result.success) {
+            const file = window.electronAPI.path.basename(result.filePath);
+            const content = result.content;
+            const lower = file.toLowerCase();
+
+            if (lower.endsWith(".html") || lower.endsWith(".htm")) {
+              const match = content.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+              editor.innerHTML = match ? match[1] : content;
+            } else {
+              editor.textContent = content;
+            }
+
+            currentFilePath = result.filePath;
+            modified = false;
+            updateStatus(`Opened: ${file}`);
+            updateToolbarState();
+          } else if (!result.cancelled) {
+            updateStatus("Open Failed.");
+          }
+        } else if (supportsFileSystemAccess) {
+          try {
+            const [handle] = await window.showOpenFilePicker({
+              types: [
+                {
+                  description: "Text / HTML / Markdown",
+                  accept: {
+                    "text/html": [".html", ".htm"],
+                    "text/plain": [".txt", ".md"],
+                  },
+                },
+              ],
+            });
+            const file = await handle.getFile();
+            const text = await file.text();
+            const name = file.name.toLowerCase();
+
+            if (name.endsWith(".html") || name.endsWith(".htm")) {
+              const match = text.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+              editor.innerHTML = match ? match[1] : text;
+              currentFileType = "html";
+            } else if (name.endsWith(".md")) {
+              editor.textContent = text;
+              currentFileType = "md";
+            } else {
+              editor.textContent = text;
+              currentFileType = "txt";
+            }
+
+            currentFileHandle = handle;
+            modified = false;
+            updateStatus(`Opened: ${file.name}`);
+            updateToolbarState();
+          } catch (e) {
+            if (e.name !== "AbortError")
+              console.error("Error opening file:", e);
+          }
+        } else {
+          fileInput.click();
+        }
+      }
+
+      // Input fallback open
+      fileInput.addEventListener("change", (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          const content = ev.target.result;
+          const name = file.name.toLowerCase();
+
+          if (name.endsWith(".html") || name.endsWith(".htm")) {
+            const match = content.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+            editor.innerHTML = match ? match[1] : content;
+            currentFileType = "html";
+          } else if (name.endsWith(".md")) {
+            editor.textContent = content;
+            currentFileType = "md";
+          } else {
+            editor.textContent = content;
+            currentFileType = "txt";
+          }
+
+          currentFileHandle = null;
+          modified = false;
+          updateStatus(`Opened: ${file.name}`);
+          updateToolbarState();
+        };
+        reader.readAsText(file);
+      });
+
+      /* --- Save (Electron / FSA / Fallback) --- */
+      async function saveFileHandler(type, forceNewPath = false) {
+        let content;
+        const defaultName = `document.${type}`;
+        const mime =
+          type === "html"
+            ? "text/html"
+            : type === "md"
+            ? "text/markdown"
+            : "text/plain";
+        const ext = type;
+
+        if (type === "html") {
+          content =
+            "<!DOCTYPE html><html><head><meta charset='utf-8'></head><body>" +
+            editor.innerHTML +
+            "</body></html>";
+        } else if (type === "md") {
+          content = convertHtmlToMarkdown(editor.innerHTML);
+        } else {
+          content = editor.innerText;
+        }
+
+        // 1. Electron
+        if (useNative) {
+          const targetPath =
+            currentFilePath && !forceNewPath ? currentFilePath : null;
+          const filters = getFileFilters(type);
+
+          const result = await window.electronAPI.saveFile(
+            content,
+            defaultName,
+            filters,
+            targetPath
+          );
+
+          if (result.success) {
+            currentFilePath = result.filePath;
+            modified = false;
+            const filename = window.electronAPI.path.basename(result.filePath);
+            updateStatus(`Saved: ${filename}`);
+          } else if (!result.cancelled) {
+            updateStatus(`Save Failed: ${result.error}`);
+          }
+          return;
+        }
+
+        // 2. Browser File System Access
+        if (supportsFileSystemAccess) {
+          let handle = currentFileHandle;
+
+          try {
+            if (!handle || currentFileType !== type || forceNewPath) {
+              handle = await window.showSaveFilePicker({
+                suggestedName: defaultName,
+                types: [
+                  {
+                    description: `${type.toUpperCase()} File`,
+                    accept: { [mime]: ["." + ext] },
+                  },
+                ],
+              });
+            }
+
+            const writable = await handle.createWritable();
+            await writable.write(content);
+            await writable.close();
+
+            currentFileHandle = handle;
+            currentFileType = type;
+            modified = false;
+            updateStatus(`Saved: ${handle.name}`);
+          } catch (e) {
+            if (e.name !== "AbortError") console.error("Error saving file:", e);
+          }
+          return;
+        }
+
+        // 3. Pure browser fallback
+        download(defaultName, content, mime);
+        modified = false;
+        updateStatus("Download complete (Fallback).");
+      }
+
+      /* --- File button wiring --- */
+      document
+        .getElementById("btnOpen")
+        .addEventListener("click", openFileHandler);
+      document
+        .getElementById("btnSaveHtml")
+        .addEventListener("click", () => saveFileHandler("html", false));
+      document
+        .getElementById("btnSaveAs")
+        .addEventListener("click", () => saveFileHandler("html", true));
+      document
+        .getElementById("btnSaveTxt")
+        .addEventListener("click", () => saveFileHandler("txt", false));
+      document
+        .getElementById("btnSaveMd")
+        .addEventListener("click", () => saveFileHandler("md", false));
+
+      /* --- Init --- */
+      editor.style.lineHeight = lineHeightSelect.value;
+      setParagraphSpacing();
+      updateStatus();
+      updateToolbarState();
+    </script>
+  </body>
+</html>

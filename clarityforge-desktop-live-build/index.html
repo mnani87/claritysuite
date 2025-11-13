@@ -1,0 +1,1362 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ClarityForge (v0.1) · Data Wrangling and Text Transformation</title>
+    <style>
+      /* BASE STYLES ADAPTED FROM CLARITY SUITE CSS */
+      :root {
+        --bg: #0f1113;
+        --panel: #13161a;
+        --ink: #eaeaea;
+        --ink-dim: #a7abb0;
+        --accent: #a7d0b1;
+        --accent2: #c8b39a;
+        --line: rgba(255, 255, 255, 0.14);
+        --r-lg: 18px;
+        --body: "Optima", "Palatino", "Palatino Linotype", "Book Antiqua",
+          "Georgia", serif;
+        --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        --status-ok: #7ac896;
+        --status-err: #ff7a7a;
+      }
+      [data-theme="light"] {
+        --bg: #f7f5ef;
+        --panel: #ffffff;
+        --ink: #1e2328;
+        --ink-dim: #6b6f73;
+        --accent: #4e6b50;
+        --accent2: #7a5e3e;
+        --line: rgba(0, 0, 0, 0.12);
+      }
+
+      body {
+        font-family: var(--body);
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        line-height: 1.6;
+      }
+
+      header {
+        background: var(--bg);
+        color: var(--ink);
+        padding: 0.8rem 2rem;
+        font-size: 1.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid var(--line);
+      }
+
+      h1 {
+        font-size: 1.15rem;
+        margin: 0;
+        color: var(--accent);
+      }
+
+      .header-actions {
+        display: flex;
+        gap: 0.5rem;
+      }
+
+      main {
+        max-width: 1000px;
+        margin: 2rem auto;
+        background: var(--panel);
+        border-radius: var(--r-lg);
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.45);
+        padding: 2rem;
+      }
+
+      textarea {
+        width: 100%;
+        min-height: 200px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        padding: 0.5rem;
+        font-family: var(--mono);
+        resize: vertical;
+        background: var(--bg);
+        color: var(--ink);
+      }
+
+      select,
+      button {
+        margin: 0.5rem 0;
+        padding: 0.5rem 1rem;
+        border-radius: 10px;
+        border: 1px solid var(--line);
+        background: var(--bg);
+        color: var(--ink);
+        font-family: var(--mono);
+        font-size: 0.85rem;
+      }
+
+      button {
+        background: var(--accent);
+        color: var(--bg);
+        cursor: pointer;
+      }
+
+      button:hover {
+        background: var(--accent2);
+        color: var(--ink);
+      }
+
+      .row {
+        display: flex;
+        gap: 1rem;
+        margin-top: 1rem;
+        flex-wrap: wrap;
+      }
+
+      .col {
+        flex: 1;
+        min-width: 260px;
+        display: flex;
+        flex-direction: column;
+      }
+
+      h2 {
+        color: var(--accent2);
+        margin-top: 0;
+        font-size: 1.2rem;
+      }
+
+      h3 {
+        color: var(--ink-dim);
+        margin: 0.5rem 0;
+        font-size: 1rem;
+      }
+
+      footer {
+        text-align: center;
+        color: var(--ink-dim);
+        padding: 1rem;
+        font-size: 0.8rem;
+        border-top: 1px solid var(--line);
+        margin-top: 2rem;
+      }
+
+      .status {
+        margin-top: 0.75rem;
+        font-size: 0.8rem;
+        color: var(--ink-dim);
+      }
+
+      .status.ok {
+        color: var(--status-ok);
+      }
+
+      .status.err {
+        color: var(--status-err);
+      }
+
+      .controls-right {
+        display: flex;
+        gap: 0.5rem;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+      }
+
+      .help {
+        margin-top: 1.5rem;
+        font-size: 0.75rem;
+        color: var(--ink-dim);
+      }
+
+      .help ul {
+        padding-left: 1.2rem;
+        margin: 0.2rem 0 0;
+      }
+
+      .help li {
+        margin: 0.1rem 0;
+      }
+
+      /* Backdrop for sidebars */
+      .side-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.35);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s ease-out;
+        z-index: 900;
+      }
+
+      .side-backdrop.visible {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      /* Shared sidebar styles */
+      .side-panel {
+        position: fixed;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: 280px;
+        max-width: 80vw;
+        background: var(--panel);
+        border-left: 1px solid var(--line);
+        box-shadow: -4px 0 12px rgba(0, 0, 0, 0.5);
+        padding: 0.6rem 1.2rem 1.2rem;
+        transform: translateX(100%);
+        transition: transform 0.25s ease-out;
+        z-index: 1000;
+        overflow-y: auto;
+        font-size: 0.8rem;
+      }
+
+      .side-panel.open {
+        transform: translateX(0);
+      }
+
+      .panel-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        position: sticky;
+        top: 0;
+        padding-bottom: 0.4rem;
+        background: var(--panel);
+        z-index: 1;
+      }
+
+      .panel-header h2 {
+        font-size: 1rem;
+        margin: 0.2rem 0;
+      }
+
+      .panel-close {
+        border-radius: 999px;
+        padding: 0.1rem 0.5rem;
+        font-size: 0.9rem;
+        line-height: 1.2;
+      }
+
+      .side-panel section {
+        margin-bottom: 0.8rem;
+      }
+
+      .side-panel h3 {
+        font-size: 0.85rem;
+        margin: 0.3rem 0;
+        color: var(--accent);
+      }
+
+      .feature-tag {
+        display: inline-block;
+        font-size: 0.7rem;
+        padding: 0.1rem 0.4rem;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        margin-bottom: 0.15rem;
+        color: var(--ink-dim);
+      }
+
+      /* New style for file I/O buttons */
+      .file-io-group {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 0.2rem;
+      }
+      .file-io-group button {
+        flex: 1;
+        background: var(--accent2);
+        color: var(--bg);
+      }
+      .file-io-group button:hover {
+        background: var(--accent);
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>ClarityForge (v0.1)</h1>
+      <div class="header-actions">
+        <button id="featuresToggle" aria-label="Toggle features panel">
+          Features
+        </button>
+        <button id="themeToggle" aria-label="Toggle theme">Theme</button>
+      </div>
+    </header>
+
+    <div id="sideBackdrop" class="side-backdrop"></div>
+
+    <aside
+      id="featuresPanel"
+      class="side-panel"
+      aria-label="ClarityForge features"
+      role="dialog"
+    >
+      <div class="panel-header">
+        <h2>Features</h2>
+        <button
+          id="featuresClose"
+          class="panel-close"
+          type="button"
+          aria-label="Close features panel"
+        >
+          ×
+        </button>
+      </div>
+
+      <section>
+        <span class="feature-tag">Data</span>
+        <h3>JSON: Pretty / Minify</h3>
+        <p>Format or compress JSON. Input must be valid JSON.</p>
+      </section>
+
+      <section>
+        <span class="feature-tag">Data</span>
+        <h3>JSON ↔ CSV</h3>
+        <p>
+          Convert JSON array of objects to CSV and back, using the first row as
+          header. (Robust parser: handles quoted fields and multiline data)
+        </p>
+      </section>
+
+      <section>
+        <span class="feature-tag">Encoding</span>
+        <h3>Base64 Encode / Decode</h3>
+        <p>
+          Turn text into Base64 and back. Uses browser
+          <code>btoa</code>/<code>atob</code> (Unicode limited).
+        </p>
+      </section>
+
+      <section>
+        <span class="feature-tag">Encoding</span>
+        <h3>URL Encode / Decode</h3>
+        <p>
+          Encode text for URLs (query strings, paths) or decode encoded URLs.
+        </p>
+      </section>
+
+      <section>
+        <span class="feature-tag">Encoding</span>
+        <h3>HTML Entities: Encode / Decode</h3>
+        <p>
+          Convert text to HTML entities or decode entity-encoded text back to
+          literal characters, without stripping tags.
+        </p>
+      </section>
+
+      <section>
+        <span class="feature-tag">Encoding</span>
+        <h3>Text ↔ Hex (Code Units)</h3>
+        <p>
+          Convert text to a sequence of 4-digit UTF-16 hex code units and back
+          (e.g. <code>0041 00DF 6770</code>).
+        </p>
+      </section>
+
+      <section>
+        <span class="feature-tag">Security</span>
+        <h3>SHA-256 Hash</h3>
+        <p>
+          Compute a SHA-256 hash using the Web Crypto API. One-way, no
+          decryption.
+        </p>
+      </section>
+
+      <section>
+        <span class="feature-tag">Time</span>
+        <h3>Timestamp ↔ Date</h3>
+        <p>
+          Convert between Unix timestamps and human-readable dates (local time).
+        </p>
+      </section>
+
+      <section>
+        <span class="feature-tag">Utility</span>
+        <h3>Generate UUID</h3>
+        <p>Generate a random UUID v4 using <code>crypto.randomUUID</code>.</p>
+      </section>
+
+      <section>
+        <span class="feature-tag">Text</span>
+        <h3>Markdown → HTML / HTML → Text / HTML → Markdown</h3>
+        <p>
+          Conversion tools for common text formats (minimal subset supported).
+        </p>
+      </section>
+
+      <section>
+        <span class="feature-tag">Text</span>
+        <h3>
+          Text Stats / Compare & Diff / Case Conversions / Reversals / Trimming
+          / Sorting
+        </h3>
+        <p>A full suite of text manipulation and analysis tools.</p>
+      </section>
+      <div class="help">
+        <strong>Notes:</strong>
+        <ul>
+          <li>
+            Each action can auto-load a small sample if the input is empty or
+            still on the previous sample.
+          </li>
+          <li>
+            For "Compare & Diff", separate Text A and Text B using a line
+            containing exactly <code>---DIFF---</code>.
+          </li>
+          <li>
+            All transformations run locally in this tab; nothing is uploaded.
+          </li>
+          <li>
+            **[Electron]** Use the **Load** and **Save** buttons to interact
+            with your local filesystem.
+          </li>
+        </ul>
+      </div>
+    </aside>
+
+    <main>
+      <h2>Offline Data Utility & Converter</h2>
+      <p style="color: var(--ink-dim); font-size: 0.9rem">
+        Convert and transform data or text instantly in your browser. All
+        processing is local, private, and fast.
+      </p>
+
+      <div class="row">
+        <div class="col">
+          <h3>Input</h3>
+          <textarea
+            id="input"
+            placeholder="Paste data or text here..."
+          ></textarea>
+          <div class="file-io-group">
+            <button id="loadFile">Load File (Input)</button>
+          </div>
+        </div>
+        <div class="col">
+          <h3>Output</h3>
+          <textarea
+            id="output"
+            placeholder="Result will appear here..."
+            readonly
+          ></textarea>
+          <div class="file-io-group">
+            <button id="saveFile">Save File (Output)</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col">
+          <label for="action" style="color: var(--ink-dim); font-size: 0.9rem"
+            >Transformation Action</label
+          >
+          <select id="action">
+            <option value="json2pretty">JSON: Pretty-Print</option>
+            <option value="json2min">JSON: Minify</option>
+            <option value="json2csv">JSON → CSV</option>
+            <option value="csv2json">CSV → JSON</option>
+
+            <option value="base64encode">Base64 Encode</option>
+            <option value="base64decode">Base64 Decode</option>
+            <option value="urlencode">URL Encode</option>
+            <option value="urldecode">URL Decode</option>
+            <option value="htmlEntityEncode">HTML Entities: Encode</option>
+            <option value="htmlEntityDecode">HTML Entities: Decode</option>
+            <option value="textToHex">Text → Hex (code units)</option>
+            <option value="hexToText">Hex → Text (code units)</option>
+
+            <option value="hashSHA256">Security: SHA-256 Hash</option>
+            <option value="tsToHuman">Time: Timestamp → Date</option>
+            <option value="humanToTs">Time: Date → Timestamp</option>
+            <option value="generateUUID">Utility: Generate UUID</option>
+
+            <option value="mdToHtml">Markdown → HTML</option>
+            <option value="htmlToText">HTML → Text</option>
+            <option value="htmlToMd">HTML → Markdown</option>
+
+            <option value="textStats">Text: Stats (lines/words/chars)</option>
+            <option value="compareDiff">Text: Compare & Diff</option>
+            <option value="uppercase">Text: Uppercase</option>
+            <option value="lowercase">Text: Lowercase</option>
+            <option value="titleCase">Text: Title Case</option>
+            <option value="reverseString">Text: Reverse String</option>
+            <option value="reverseWords">Text: Reverse Words</option>
+            <option value="trimLines">Text: Trim Lines</option>
+            <option value="normalizeWhitespace">
+              Text: Normalize Whitespace
+            </option>
+            <option value="sortlines">Lines: Sort</option>
+            <option value="dedupelines">Lines: Deduplicate</option>
+          </select>
+        </div>
+        <div class="col">
+          <label
+            for="delimiter"
+            style="color: var(--ink-dim); font-size: 0.9rem"
+            >CSV Delimiter</label
+          >
+          <select id="delimiter">
+            <option value=",">Comma (,)</option>
+            <option value=";">Semicolon (;)</option>
+            <option value="\t">Tab (\t)</option>
+          </select>
+          <div class="controls-right">
+            <button id="convert">Run</button>
+            <button id="copyOutput" type="button">Copy Output</button>
+            <button
+              id="clear"
+              type="button"
+              style="
+                background: var(--bg);
+                color: var(--ink);
+                border-color: var(--accent2);
+              "
+            >
+              Clear All
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div id="status" class="status">Ready.</div>
+    </main>
+
+    <footer>
+      ClarityForge v0.1 (Electron Build). Released Nov. 2025. Free for personal
+      use.
+    </footer>
+
+    <script>
+      // Check for the Electron API bridge setup by preload.js
+      if (
+        typeof window.electron === "undefined" &&
+        window.location.protocol !== "file:"
+      ) {
+        console.warn(
+          "window.electron API not found. File I/O buttons will not work outside of Electron."
+        );
+      }
+
+      const input = document.getElementById("input");
+      const output = document.getElementById("output");
+      const action = document.getElementById("action");
+      const delimiter = document.getElementById("delimiter");
+      const themeToggle = document.getElementById("themeToggle");
+      const featuresToggle = document.getElementById("featuresToggle");
+      const featuresPanel = document.getElementById("featuresPanel");
+      const featuresClose = document.getElementById("featuresClose");
+      const sideBackdrop = document.getElementById("sideBackdrop");
+      const statusEl = document.getElementById("status");
+      const loadFileBtn = document.getElementById("loadFile");
+      const saveFileBtn = document.getElementById("saveFile");
+      const themeKey = "clarityforge_theme";
+      let isProcessing = false;
+
+      // --- Sample inputs per action ---
+      const samples = {
+        json2pretty: '{"id":1,"name":"Alpha","active":true}',
+        json2min:
+          '{\n  "id": 1,\n  "name": "Alpha",\n  "tags": ["demo","pretty"]\n}',
+        json2csv: '[{"id":1,"name":"Alpha"},{"id":2,"name":"Beta"}]',
+        csv2json:
+          'user_id,name,description\n1,Alpha,"First description. This field\nspans multiple lines."\n2,Beta,"Second description, simple."',
+        base64encode: "Hello ClarityForge",
+        base64decode: "SGVsbG8gQ2xhcml0eUZvcmdl",
+        urlencode: "https://example.com/search?q=clarity forge&lang=en",
+        urldecode:
+          "https%3A%2F%2Fexample.com%2Fsearch%3Fq%3Dclarity%20forge%26lang%3Den",
+        hashSHA256: "hash me",
+        tsToHuman: "1700000000",
+        humanToTs: "2023-11-14 10:00:00",
+        generateUUID: "",
+        mdToHtml:
+          "# Title\n\nA short *markdown* sample with **bold** and a list:\n\n- Alpha\n- Beta\n- Gamma",
+        htmlToText:
+          "<h1>Title</h1><p>A short <strong>HTML</strong> snippet.</p>",
+        htmlToMd:
+          '<h1>Heading</h1><p>A <strong>bold</strong> and <em>italic</em> sentence with a <a href="https://example.com">link</a>.</p><ul><li>Alpha</li><li>Beta</li></ul>',
+        textStats: "First line\nSecond line with words\nThird",
+        compareDiff:
+          "line one\nline two\nline three\n---DIFF---\nline one\nline 2\nline three",
+        uppercase: "some text to UPPERCASE",
+        lowercase: "SOME TEXT to lowercase",
+        titleCase: "the quick brown fox jumps over the lazy dog",
+        reverseString: "abcde",
+        reverseWords: "one two three four five",
+        trimLines: "  line one  \nline two   \n   line three   ",
+        normalizeWhitespace:
+          "This    has \t many   spaces\nand    irregular   whitespace.",
+        sortlines: "Banana\nApple\nCherry",
+        dedupelines: "Alpha\nBeta\nAlpha\nGamma\nBeta",
+        htmlEntityEncode: "<div>Example & test</div>",
+        htmlEntityDecode: "&lt;div&gt;Example &amp; test&lt;/div&gt;",
+        textToHex: "Hex",
+        hexToText: "0048 0065 0078",
+      };
+
+      let lastSampleAction = null;
+
+      function loadSampleForAction(act) {
+        const sample = samples[act];
+        if (sample !== undefined) {
+          input.value = sample;
+          lastSampleAction = act;
+        }
+      }
+
+      function maybeSwapSampleOnActionChange(nextAction) {
+        const current = input.value;
+        const prevSample = lastSampleAction ? samples[lastSampleAction] : null;
+
+        if (
+          current.trim() === "" ||
+          (prevSample !== null && current === prevSample)
+        ) {
+          loadSampleForAction(nextAction);
+        }
+      }
+
+      // --- Theme Logic ---
+      (function initTheme() {
+        try {
+          const savedTheme = localStorage.getItem(themeKey);
+          if (savedTheme) {
+            document.documentElement.setAttribute("data-theme", savedTheme);
+          } else {
+            document.documentElement.setAttribute("data-theme", "dark");
+          }
+        } catch (e) {
+          document.documentElement.setAttribute("data-theme", "dark");
+        }
+      })();
+
+      themeToggle.onclick = () => {
+        const curr =
+          document.documentElement.getAttribute("data-theme") || "dark";
+        const next = curr === "dark" ? "light" : "dark";
+        document.documentElement.setAttribute("data-theme", next);
+        try {
+          localStorage.setItem(themeKey, next);
+        } catch (e) {}
+      };
+
+      // --- Side panels helpers ---
+      function closeFeatures() {
+        featuresPanel.classList.remove("open");
+        sideBackdrop.classList.remove("visible");
+      }
+
+      featuresToggle.onclick = () => {
+        const isOpen = featuresPanel.classList.contains("open");
+        if (isOpen) closeFeatures();
+        else {
+          featuresPanel.classList.add("open");
+          sideBackdrop.classList.add("visible");
+        }
+      };
+
+      featuresClose.onclick = closeFeatures;
+      sideBackdrop.onclick = closeFeatures;
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") closeFeatures();
+      });
+
+      // --- Core Transformation Utilities (Unchanged) ---
+
+      function jsonToPretty(jsonStr) {
+        return JSON.stringify(JSON.parse(jsonStr), null, 2);
+      }
+
+      function jsonToMinify(jsonStr) {
+        return JSON.stringify(JSON.parse(jsonStr));
+      }
+
+      function jsonToCsv(jsonStr) {
+        const arr = JSON.parse(jsonStr);
+        if (
+          !Array.isArray(arr) ||
+          arr.some((item) => typeof item !== "object" || item === null)
+        ) {
+          throw new Error("Input must be a JSON array of objects.");
+        }
+
+        const delim = delimiter.value;
+        const allKeys = new Set();
+        arr.forEach((obj) =>
+          Object.keys(obj).forEach((key) => allKeys.add(key))
+        );
+        const headers = Array.from(allKeys);
+
+        const lines = [];
+        lines.push(
+          headers
+            .map((h) => {
+              return h.includes(delim) || h.includes('"') || h.includes("\n")
+                ? `"${h.replace(/"/g, '""')}"`
+                : h;
+            })
+            .join(delim)
+        );
+
+        for (const obj of arr) {
+          const row = headers.map((h) => {
+            let val = obj[h];
+            if (val === undefined || val === null) val = "";
+
+            const str = String(val);
+
+            if (
+              str.includes(delim) ||
+              str.includes('"') ||
+              str.includes("\n")
+            ) {
+              return '"' + str.replace(/"/g, '""') + '"';
+            }
+            return str;
+          });
+          lines.push(row.join(delim));
+        }
+        return lines.join("\n");
+      }
+
+      function csvToJson(csv) {
+        if (!csv.trim()) return "[]";
+
+        const delim = delimiter.value;
+        const rows = [];
+        let currentRow = [];
+        let currentField = "";
+        let inQuotes = false;
+
+        for (let i = 0; i < csv.length; i++) {
+          const char = csv[i];
+
+          if (char === '"') {
+            if (inQuotes && csv[i + 1] === '"') {
+              currentField += '"';
+              i++;
+            } else {
+              inQuotes = !inQuotes;
+            }
+          } else if (char === delim && !inQuotes) {
+            currentRow.push(currentField);
+            currentField = "";
+          } else if (char === "\n" && !inQuotes) {
+            if (csv[i - 1] === "\r") {
+            }
+            currentRow.push(currentField);
+            rows.push(currentRow);
+            currentRow = [];
+            currentField = "";
+          } else if (char === "\r") {
+            if (inQuotes) {
+              currentField += char;
+            }
+          } else {
+            currentField += char;
+          }
+        }
+
+        if (currentField !== "" || currentRow.length > 0) {
+          currentRow.push(currentField);
+          rows.push(currentRow);
+        }
+
+        const validRows = rows.filter((r) =>
+          r.some((f) => f.trim() !== "" || r.length > 1)
+        );
+        if (validRows.length === 0) return "[]";
+
+        const headers = validRows[0].map((h) => h.trim());
+        const dataRows = validRows.slice(1);
+        const jsonRows = [];
+
+        dataRows.forEach((values, idx) => {
+          if (values.length !== headers.length) {
+            throw new Error(
+              `Row ${idx + 2} has ${values.length} columns, expected ${
+                headers.length
+              }. Check for unclosed quotes or incorrect delimiter.`
+            );
+          }
+          jsonRows.push(
+            headers.reduce((acc, h, i) => {
+              acc[h] = values[i];
+              return acc;
+            }, {})
+          );
+        });
+
+        return JSON.stringify(jsonRows, null, 2);
+      }
+
+      async function hashText(text, algorithm = "SHA-256") {
+        if (typeof crypto === "undefined" || !crypto.subtle) {
+          throw new Error(
+            "Web Crypto API not available in this browser/context."
+          );
+        }
+        const encoder = new TextEncoder();
+        const data = encoder.encode(text);
+        const hashBuffer = await crypto.subtle.digest(algorithm, data);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        const hashHex = hashArray
+          .map((b) => b.toString(16).padStart(2, "0"))
+          .join("");
+        return hashHex;
+      }
+
+      function tsToHuman(tsStr) {
+        const ts = Number(tsStr);
+        if (isNaN(ts) || ts <= 0) {
+          throw new Error("Invalid or negative timestamp.");
+        }
+        const date = new Date(ts * (ts < 10000000000 ? 1000 : 1));
+        return date.toLocaleString();
+      }
+
+      function humanToTs(dateStr) {
+        const date = new Date(dateStr);
+        if (isNaN(date.getTime())) {
+          throw new Error(
+            "Invalid date string. Use format like YYYY-MM-DD HH:MM:SS."
+          );
+        }
+        return Math.floor(date.getTime() / 1000).toString();
+      }
+
+      function generateUUID() {
+        if (typeof crypto === "undefined" || !crypto.randomUUID) {
+          return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(
+            /[xy]/g,
+            function (c) {
+              const r = (Math.random() * 16) | 0;
+              const v = c === "x" ? r : (r & 0x3) | 0x8;
+              return v.toString(16);
+            }
+          );
+        }
+        return crypto.randomUUID();
+      }
+
+      function htmlEntityEncode(str) {
+        const textarea = document.createElement("textarea");
+        textarea.value = str;
+        return textarea.innerHTML;
+      }
+
+      function htmlEntityDecode(str) {
+        const textarea = document.createElement("textarea");
+        textarea.innerHTML = str;
+        return textarea.value;
+      }
+
+      function textToHex(str) {
+        const hex = [];
+        for (let i = 0; i < str.length; i++) {
+          const code = str.charCodeAt(i).toString(16).padStart(4, "0");
+          hex.push(code);
+        }
+        return hex.join(" ");
+      }
+
+      function hexToText(hexStr) {
+        const parts = hexStr.trim().split(/\s+/);
+        let res = "";
+        for (const p of parts) {
+          if (!p) continue;
+          const code = parseInt(p, 16);
+          if (Number.isNaN(code)) {
+            throw new Error("Invalid hex code: " + p);
+          }
+          res += String.fromCharCode(code);
+        }
+        return res;
+      }
+
+      function mdToHtml(md) {
+        const lines = md.split(/\r?\n/);
+        let html = "";
+        let inList = false;
+
+        const esc = (s) =>
+          s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+        const formatInline = (text) => {
+          let t = esc(text);
+          t = t.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+          t = t.replace(/__(.+?)__/g, "<strong>$1</strong>");
+          t = t.replace(/\*(.+?)\*/g, "<em>$1</em>");
+          t = t.replace(/_(.+?)_/g, "<em>$1</em>");
+          t = t.replace(/`(.+?)`/g, "<code>$1</code>");
+          return t;
+        };
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed) {
+            if (inList) {
+              html += "</ul>\n";
+              inList = false;
+            }
+            html += "<br>\n";
+            continue;
+          }
+
+          const headingMatch = trimmed.match(/^(#{1,6})\s+(.+)$/);
+          if (headingMatch) {
+            if (inList) {
+              html += "</ul>\n";
+              inList = false;
+            }
+            const level = headingMatch[1].length;
+            html += `<h${level}>${formatInline(headingMatch[2])}</h${level}>\n`;
+            continue;
+          }
+
+          const listMatch = trimmed.match(/^[-*+]\s+(.+)$/);
+          if (listMatch) {
+            if (!inList) {
+              html += "<ul>\n";
+              inList = true;
+            }
+            html += `<li>${formatInline(listMatch[1])}</li>\n`;
+            continue;
+          }
+
+          if (inList) {
+            html += "</ul>\n";
+            inList = false;
+          }
+          html += `<p>${formatInline(trimmed)}</p>\n`;
+        }
+
+        if (inList) {
+          html += "</ul>\n";
+        }
+
+        return html.trim();
+      }
+
+      function htmlToText(htmlStr) {
+        const div = document.createElement("div");
+        div.innerHTML = htmlStr;
+        return (div.textContent || div.innerText || "").trim();
+      }
+
+      function htmlToMarkdown(htmlStr) {
+        const container = document.createElement("div");
+        container.innerHTML = htmlStr;
+
+        function walk(node) {
+          let md = "";
+
+          node.childNodes.forEach((child) => {
+            if (child.nodeType === 3) {
+              const text = child.nodeValue.replace(/\s+/g, " ");
+              md += text;
+            } else if (child.nodeType === 1) {
+              const tag = child.tagName.toLowerCase();
+
+              if (tag === "br") {
+                md += "\n";
+                return;
+              }
+
+              if (/^h[1-6]$/.test(tag)) {
+                const level = parseInt(tag[1], 10);
+                const inner = walk(child).trim();
+                md += "\n\n" + "#".repeat(level) + " " + inner + "\n\n";
+                return;
+              }
+
+              if (tag === "p") {
+                const inner = walk(child).trim();
+                if (inner) {
+                  md += "\n\n" + inner + "\n\n";
+                }
+                return;
+              }
+
+              if (tag === "strong" || tag === "b") {
+                const inner = walk(child).trim();
+                md += "**" + inner + "**";
+                return;
+              }
+
+              if (tag === "em" || tag === "i") {
+                const inner = walk(child).trim();
+                md += "*" + inner + "*";
+                return;
+              }
+
+              if (tag === "code") {
+                const inner = walk(child).trim();
+                md += "`" + inner + "`";
+                return;
+              }
+
+              if (tag === "a") {
+                const href = child.getAttribute("href") || "";
+                const inner = walk(child).trim() || href;
+                md += "[" + inner + "](" + href + ")";
+                return;
+              }
+
+              if (tag === "ul") {
+                child.childNodes.forEach((li) => {
+                  if (li.nodeType === 1 && li.tagName.toLowerCase() === "li") {
+                    const inner = walk(li).trim();
+                    if (inner) {
+                      md += "\n- " + inner;
+                    }
+                  }
+                });
+                md += "\n\n";
+                return;
+              }
+
+              if (tag === "ol") {
+                let index = 1;
+                child.childNodes.forEach((li) => {
+                  if (li.nodeType === 1 && li.tagName.toLowerCase() === "li") {
+                    const inner = walk(li).trim();
+                    if (inner) {
+                      md += "\n" + index + ". " + inner;
+                      index++;
+                    }
+                  }
+                });
+                md += "\n\n";
+                return;
+              }
+
+              md += walk(child);
+            }
+          });
+
+          return md;
+        }
+
+        let result = walk(container);
+        result = result.replace(/\n{3,}/g, "\n\n").trim();
+        return result;
+      }
+
+      function textStats(str) {
+        const lines = str.length ? str.split(/\r?\n/).length : 0;
+        const trimmed = str.trim();
+        const words = trimmed ? trimmed.split(/\s+/).length : 0;
+        const chars = str.length;
+        return JSON.stringify({ lines, words, chars }, null, 2);
+      }
+
+      function performDiff(fullInput) {
+        const parts = fullInput.split(/---DIFF---/);
+        if (parts.length !== 2) {
+          throw new Error(
+            "Input must contain exactly one ---DIFF--- line to separate Text A and Text B."
+          );
+        }
+
+        const textA = parts[0].trim().split(/\r?\n/);
+        const textB = parts[1].trim().split(/\r?\n/);
+        const outputLines = [];
+        const maxLength = Math.max(textA.length, textB.length);
+
+        for (let i = 0; i < maxLength; i++) {
+          const lineA = textA[i] !== undefined ? textA[i] : "";
+          const lineB = textB[i] !== undefined ? textB[i] : "";
+
+          if (lineA === lineB) {
+            outputLines.push("  " + lineA);
+          } else {
+            if (lineA !== "") {
+              outputLines.push("- " + lineA);
+            }
+            if (lineB !== "") {
+              outputLines.push("+ " + lineB);
+            }
+          }
+        }
+
+        const header =
+          "--- Diff Results ---\n" +
+          "  ( ) Line is common\n" +
+          "  (-) Line in Text A only\n" +
+          "  (+) Line in Text B only\n" +
+          "--------------------";
+
+        return header + "\n" + outputLines.join("\n");
+      }
+
+      function toTitleCase(str) {
+        return str.replace(/\w\S*/g, (w) => {
+          return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+        });
+      }
+
+      function reverseString(str) {
+        return str.split("").reverse().join("");
+      }
+
+      function reverseWords(str) {
+        const words = str.trim().split(/\s+/);
+        return words.reverse().join(" ");
+      }
+
+      function trimLines(str) {
+        return str
+          .split(/\r?\n/)
+          .map((l) => l.trim())
+          .join("\n");
+      }
+
+      function normalizeWhitespace(str) {
+        return str.replace(/\s+/g, " ").trim();
+      }
+
+      // --- Status Management ---
+      function setStatus(message, type) {
+        statusEl.textContent = message;
+        statusEl.classList.remove("ok", "err");
+        if (type === "ok") statusEl.classList.add("ok");
+        if (type === "err") statusEl.classList.add("err");
+      }
+
+      // --- Main Execution (Async) ---
+      async function executeTransformation() {
+        if (isProcessing) return;
+
+        const val = input.value;
+        const act = action.value;
+
+        if (act === "generateUUID") {
+          try {
+            output.value = generateUUID();
+            setStatus("UUID generated successfully.", "ok");
+          } catch (e) {
+            output.value = "ERROR: " + e.message;
+            setStatus("ERROR: UUID generation failed.", "err");
+          }
+          return;
+        }
+
+        if (val.trim() === "" && act !== "generateUUID") {
+          output.value = "";
+          setStatus("Ready. Input is empty.", "");
+          return;
+        }
+
+        isProcessing = true;
+        output.value = "Processing...";
+        setStatus("Processing…", "");
+
+        try {
+          let res;
+          switch (act) {
+            case "json2pretty":
+              res = jsonToPretty(val);
+              break;
+            case "json2min":
+              res = jsonToMinify(val);
+              break;
+            case "json2csv":
+              res = jsonToCsv(val);
+              break;
+            case "csv2json":
+              res = csvToJson(val);
+              break;
+            case "base64encode":
+              res = btoa(val);
+              break;
+            case "base64decode":
+              res = atob(val);
+              break;
+            case "urlencode":
+              res = encodeURIComponent(val);
+              break;
+            case "urldecode":
+              res = decodeURIComponent(val);
+              break;
+            case "htmlEntityEncode":
+              res = htmlEntityEncode(val);
+              break;
+            case "htmlEntityDecode":
+              res = htmlEntityDecode(val);
+              break;
+            case "textToHex":
+              res = textToHex(val);
+              break;
+            case "hexToText":
+              res = hexToText(val);
+              break;
+            case "hashSHA256":
+              res = await hashText(val);
+              break;
+            case "tsToHuman":
+              res = tsToHuman(val);
+              break;
+            case "humanToTs":
+              res = humanToTs(val);
+              break;
+            case "mdToHtml":
+              res = mdToHtml(val);
+              break;
+            case "htmlToText":
+              res = htmlToText(val);
+              break;
+            case "htmlToMd":
+              res = htmlToMarkdown(val);
+              break;
+            case "textStats":
+              res = textStats(val);
+              break;
+            case "compareDiff":
+              res = performDiff(val);
+              break;
+            case "uppercase":
+              res = val.toUpperCase();
+              break;
+            case "lowercase":
+              res = val.toLowerCase();
+              break;
+            case "titleCase":
+              res = toTitleCase(val);
+              break;
+            case "reverseString":
+              res = reverseString(val);
+              break;
+            case "reverseWords":
+              res = reverseWords(val);
+              break;
+            case "trimLines":
+              res = trimLines(val);
+              break;
+            case "normalizeWhitespace":
+              res = normalizeWhitespace(val);
+              break;
+            case "sortlines":
+              res = val.split(/\r?\n/).sort().join("\n");
+              break;
+            case "dedupelines":
+              res = [...new Set(val.split(/\r?\n/))].join("\n");
+              break;
+            default:
+              res = "Select a valid action.";
+              break;
+          }
+          output.value = res;
+          setStatus("Transformation OK.", "ok");
+        } catch (e) {
+          // Keep output error detailed, but status error concise
+          const briefError = e.message.replace(/\r?\n|\r/g, " ");
+          output.value = "ERROR: " + e.message;
+          setStatus("ERROR: " + briefError, "err");
+        } finally {
+          isProcessing = false;
+        }
+      }
+
+      // --- File I/O (Electron IPC) ---
+      loadFileBtn.onclick = async () => {
+        if (typeof window.electron === "undefined") {
+          setStatus("File I/O requires Electron environment.", "err");
+          return;
+        }
+        setStatus("Opening file dialog...", "");
+        try {
+          const fileContent = await window.electron.loadFile();
+          if (fileContent) {
+            input.value = fileContent;
+            // Clear sample tracking so conversion runs on real data
+            lastSampleAction = null;
+            setStatus(
+              "File loaded successfully. Running transformation...",
+              "ok"
+            );
+            executeTransformation();
+          } else {
+            setStatus("File loading cancelled or failed.", "");
+          }
+        } catch (e) {
+          setStatus("ERROR: Failed to load file from disk.", "err");
+          console.error("File Load Error:", e);
+        }
+      };
+
+      saveFileBtn.onclick = async () => {
+        if (typeof window.electron === "undefined") {
+          setStatus("File I/O requires Electron environment.", "err");
+          return;
+        }
+        if (output.value.trim() === "") {
+          setStatus("Output is empty. Nothing to save.", "err");
+          return;
+        }
+        setStatus("Opening save dialog...", "");
+        try {
+          const success = await window.electron.saveFile(output.value);
+          if (success) {
+            setStatus("File saved successfully.", "ok");
+          } else {
+            setStatus("File saving cancelled or failed.", "err");
+          }
+        } catch (e) {
+          setStatus("ERROR: Failed to save file to disk.", "err");
+          console.error("File Save Error:", e);
+        }
+      };
+
+      // --- Event Handlers ---
+      document.getElementById("convert").onclick = executeTransformation;
+
+      function debounce(fn, ms) {
+        let t;
+        return (...args) => {
+          clearTimeout(t);
+          t = setTimeout(() => fn.apply(null, args), ms);
+        };
+      }
+
+      input.addEventListener("input", debounce(executeTransformation, 300));
+
+      action.addEventListener("change", () => {
+        const next = action.value;
+        maybeSwapSampleOnActionChange(next);
+        executeTransformation();
+      });
+
+      delimiter.addEventListener("change", () => {
+        executeTransformation();
+      });
+
+      document.getElementById("clear").onclick = () => {
+        input.value = "";
+        output.value = "";
+        setStatus("Cleared.", "");
+      };
+
+      document.getElementById("copyOutput").onclick = async () => {
+        if (!output.value) {
+          setStatus("Nothing to copy.", "");
+          return;
+        }
+        try {
+          await navigator.clipboard.writeText(output.value);
+          setStatus("Output copied to clipboard.", "ok");
+        } catch (e) {
+          setStatus("Clipboard access failed. Copy manually.", "err");
+        }
+      };
+
+      // Initial seed: CSV → JSON with sample
+      action.value = "csv2json";
+      loadSampleForAction("csv2json");
+      executeTransformation();
+    </script>
+  </body>
+</html>

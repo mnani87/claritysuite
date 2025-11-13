@@ -1,0 +1,43 @@
+{
+  "name": "clarityforge",
+  "version": "0.1.0",
+  "productName": "ClarityForge",
+  "description": "Local-first data and text utility from ClaritySuite.",
+  "author": "Mihir Naniwadekar",
+  "license": "MIT",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder"
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^24.9.0"
+  },
+  "build": {
+    "appId": "app.claritysuite.clarityforge",
+    "productName": "ClarityForge",
+    "files": [
+      "index.html",
+      "main.js",
+      "preload.js",
+      "icon.*"
+    ],
+    "mac": {
+      "category": "public.app-category.developer-tools",
+      "icon": "icon.icns",
+      "identity": null
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "icon.png"
+    },
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "icon": "icon.png"
+    }
+  }
+}

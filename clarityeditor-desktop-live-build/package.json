@@ -1,0 +1,43 @@
+{
+  "name": "clarityeditor-desktop",
+  "version": "0.1.0",
+  "description": "ClarityEditor desktop (Electron wrapper around local-first editor)",
+  "main": "main.js",
+  "author": "Mihir Naniwadekar",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "dist:mac": "electron-builder --mac",
+    "dist:linux": "electron-builder --linux"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "electron": "^30.5.1",
+    "electron-builder": "^26.0.12"
+  },
+  "build": {
+    "appId": "app.claritysuite.clarityeditor",
+    "productName": "ClarityEditor",
+    "files": [
+      "index.html",
+      "main.js",
+      "preload.js",
+      "icon.png",
+      "node_modules/**/*",
+      "package.json"
+    ],
+    "mac": {
+      "target": "dmg",
+      "icon": "icon.png",
+      "identity": null
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "icon": "icon.png",
+      "category": "Utility"
+    }
+  }
+}

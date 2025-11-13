@@ -1,0 +1,56 @@
+{
+  "name": "claritytoybox",
+  "version": "0.1.0",
+  "productName": "ClarityToybox",
+  "description": "ClarityToybox · Local-first calm mini-games from ClaritySuite.",
+  "author": "Mihir Naniwadekar",
+  "license": "MIT",
+  "main": "electron-main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder"
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^26.0.0"
+  },
+  "build": {
+    "appId": "app.claritysuite.claritytoybox",
+    "productName": "ClarityToybox",
+    "files": [
+      "index.html",
+      "style.css",
+      "main.js",
+      "electron-main.js",
+      "logo.*",
+      "node_modules/**/*",
+      "package.json"
+    ],
+    "mac": {
+      "category": "public.app-category.games",
+      "icon": "logo.icns",
+      "identity": null,
+      "hardenedRuntime": false,
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "universal"
+          ]
+        }
+      ],
+      "artifactName": "ClarityToybox-${version}-${arch}.${ext}"
+    },
+    "dmg": {
+      "backgroundColor": "#0f1113",
+      "title": "ClarityToybox Installer"
+    },
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "category": "Game",
+      "icon": "logo.png"
+    }
+  }
+}

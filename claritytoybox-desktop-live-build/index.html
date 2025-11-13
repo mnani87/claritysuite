@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ClarityToybox · Games Suite</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header>
+      <div class="brand">
+        <a href="#" id="homeLink" style="text-decoration: none; color: inherit">
+          <h1>ClarityToybox</h1>
+        </a>
+        <div class="sub">Local-first · Calm mini-games</div>
+      </div>
+      <div class="row">
+        <button id="themeToggle" title="Toggle Light/Dark Theme">Theme</button>
+        <button id="backupBtn" title="Export backup">Backup</button>
+        <button id="restoreBtn" title="Import backup">Restore</button>
+      </div>
+    </header>
+    <div class="tabs" id="tabs">
+      <button class="tab" data-game="memorytiles">MemoryTiles</button>
+      <button class="tab" data-game="pathlines">PathLines</button>
+      <button class="tab" data-game="sequencegarden">SequenceGarden</button>
+      <button class="tab" data-game="constellation">Constellation</button>
+      <button class="tab" data-game="sequenceforge">SequenceForge</button>
+      <button class="tab" data-game="sumleaves">SumLeaves</button>
+      <button class="tab" data-game="colorbloom">ColourBloom</button>
+      <button class="tab" data-game="fractalgrow">FractalGrow</button>
+    </div>
+
+    <main>
+      <div class="panel section" id="playArea">
+        <h2>Welcome to ClarityToybox</h2>
+
+        <p style="margin-top: 1rem; font-size: 0.9rem; color: var(--ink-dim)">
+          Designed for quiet thinking and simple joy.
+        </p>
+        <br />
+
+        <p style="margin-top: -0.3rem">
+          <b>ClarityToybox</b> is a collection of small and calm logic and
+          memory games. No logins or accounts needed. Your progress and
+          preferences are saved automatically on your device. The Toybox
+          presently contains the following games:
+        </p>
+
+        <ul style="line-height: 1.6; margin-left: 1rem">
+          <li><b>MemoryTiles</b> — match symbol pairs, sharpen recall.</li>
+          <li>
+            <b>PathLines</b> — avoid obstacles and trace flowing paths without
+            crossing yourself.
+          </li>
+          <li>
+            <b>SequenceGarden</b> — remember and repeat the sequences in which
+            panels flash up.
+          </li>
+          <li>
+            <b>Constellation</b> — see if you can memorise symmetric patterns.
+          </li>
+          <li>
+            <b>SequenceForge</b> — choose the next term in a hidden pattern.
+          </li>
+          <li><b>SumLeaves</b> — find number pairs that meet a target sum.</li>
+          <li>
+            <b>ColourBloom</b> — blend hues until the palette feels balanced.
+          </li>
+          <li><b>FractalGrow</b> — watch recursive geometry bloom.</li>
+        </ul>
+
+        <p style="margin-top: 1.5rem; color: var(--ink-dim)">
+          More games coming soon!
+        </p>
+      </div>
+
+      <!-- ADD THIS DETAILS PANEL HERE -->
+      <details id="mathsPanel" class="info-card maths-details">
+        <summary>Show the maths behind these games</summary>
+        <div class="maths-body">
+          <article>
+            <h3>MemoryTiles</h3>
+            <p>
+              For <code>n</code> pairs, there are
+              <code>(2n)! / 2ⁿ</code> possible layouts. Difficulty scales
+              factorially. Optimal play relies on memory rather than chance,
+              mirroring partial matchings in graph theory.
+            </p>
+          </article>
+
+          <article>
+            <h3>SumLeaves</h3>
+            <p>
+              A friendly form of the <strong>Subset Sum</strong> problem — an
+              NP-complete puzzle. Each board hides <code>2ⁿ</code> possible
+              subsets of cells, and the player must find one summing to the
+              target. Difficulty tuning uses number range and target
+              distribution.
+              <a
+                href="https://en.wikipedia.org/wiki/Subset_sum_problem"
+                target="_blank"
+                rel="noopener"
+                >Learn more about Subset Sum problem</a
+              >.
+            </p>
+          </article>
+
+          <article>
+            <h3>SequenceForge</h3>
+            <p>
+              Exercises rule induction and algebraic reasoning. Players infer
+              the hidden function <code>f(n)</code>, often linear (<code
+                >an + b</code
+              >), quadratic (<code>an² + bn + c</code>), or modular (<code
+                >n mod k</code
+              >). It’s informal function discovery and pattern fitting.
+              <a
+                href="https://en.wikipedia.org/wiki/Integer_sequence"
+                target="_blank"
+                rel="noopener"
+                >Learn more about Integer Sequences</a
+              >.
+            </p>
+          </article>
+
+          <article>
+            <h3>SequenceGarden</h3>
+            <p>
+              Classic memory growth curve: level <code>k</code> has sequence
+              length <code>k</code>, so total taps = <code>k(k+1)/2</code>.
+              Challenge grows quadratically. Information load increases linearly
+              in bits with each added symbol. How much can you hold in your
+              working memory?
+              <a
+                href="https://en.wikipedia.org/wiki/Working_memory"
+                target="_blank"
+                rel="noopener"
+                >Learn more about Working Memory</a
+              >.
+            </p>
+          </article>
+
+          <article>
+            <h3>Constellation</h3>
+            <p>
+              Based on
+              <a
+                href="https://en.wikipedia.org/wiki/Working_memory"
+                target="_blank"
+                rel="noopener"
+              >
+                visual working memory </a
+              >. A pattern of illuminated squares appears briefly on a grid,
+              then disappears, and you have to reconstruct it from recall. It
+              exercises short-term spatial memory and pattern recall, similar to
+              classic pattern-recall tasks in cognitive psychology.
+            </p>
+          </article>
+
+          <article>
+            <h3>PathLines</h3>
+            <p>
+              Grounded in Euclidean geometry. Path length ≈ Σ |p₍ᵢ₊₁₎ – pᵢ|.
+              Collision tests use distance inequalities. The concept parallels
+              shortest-path problems with geometric constraints.
+              <a
+                href="https://en.wikipedia.org/wiki/Shortest_path_problem"
+                target="_blank"
+                rel="noopener"
+                >Learn more about Shortest Path problem</a
+              >.
+            </p>
+          </article>
+
+          <article>
+            <h3>ColourBloom</h3>
+            <p>
+              Colour space as 3-D vectors: <code>(R,G,B)</code>. Blends are
+              linear interpolation <code>(1–t)c₁ + t c₂</code>. Switching to HSL
+              or HSV uses cylindrical coordinates — hue as angle, saturation as
+              radius, lightness as height.
+              <a
+                href="https://en.wikipedia.org/wiki/Color_space"
+                target="_blank"
+                rel="noopener"
+                >Learn more about Colour Space</a
+              >.
+            </p>
+          </article>
+
+          <article>
+            <h3>FractalGrow</h3>
+            <p>
+              Recursive branching with decay factor <code>d</code> and spread
+              <code>α</code>. Segments grow exponentially:
+              <code>(b^(k+1) – 1)/(b – 1)</code>. Visuals approximate
+              self-similar fractals with non-integer dimension
+              <code>D</code> defined by <code>N = s^(–D)</code>.
+              <a
+                href="https://en.wikipedia.org/wiki/Fractal"
+                target="_blank"
+                rel="noopener"
+                >Learn more about Fractals</a
+              >.
+            </p>
+          </article>
+        </div>
+      </details>
+    </main>
+
+    <footer>
+      <h6>ClarityToybox v0.1. Released Nov. 2025. Free for personal use.</h6>
+    </footer>
+
+    <script src="main.js"></script>
+    <script>
+      const tabsEl = document.querySelectorAll("#tabs .tab");
+      tabsEl.forEach((t) =>
+        t.addEventListener("click", () => {
+          tabsEl.forEach((x) => x.classList.remove("active"));
+          t.classList.add("active");
+        })
+      );
+    </script>
+  </body>
+</html>

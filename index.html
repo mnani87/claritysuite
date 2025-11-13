@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ClaritySuite · Calm Tools for Work & Play</title>
+    <meta
+      name="description"
+      content="ClaritySuite is a collection of offline, local-first tools for focused writing, journaling, planning, and data wrangling. Web and macOS. No accounts. No telemetry."
+    />
+    <link rel="canonical" href="https://claritysuite.app/" />
+    <meta name="color-scheme" content="dark light" />
+    <meta name="theme-color" content="#0f1113" />
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+
+    <style>
+      :root {
+        --bg: #0f1113;
+        --panel: #13161a;
+        --ink: #eaeaea;
+        --ink-dim: #a7abb0;
+        --accent: #a7d0b1;
+        --accent2: #c8b39a;
+        --line: rgba(255, 255, 255, 0.12);
+        --shadow: 0 6px 24px rgba(0, 0, 0, 0.28);
+        --r: 18px;
+        --serif: "Palatino", "Palatino Linotype", "Book Antiqua", "Georgia",
+          serif;
+        --body: "Optima", "Optima-Regular", "Segoe UI", "Helvetica Neue",
+          sans-serif;
+        --mono: ui-monospace, Menlo, Consolas, monospace;
+        --maxw: 1120px;
+      }
+      [data-theme="light"] {
+        --bg: #f7f5ef;
+        --panel: #fff;
+        --ink: #1e2328;
+        --ink-dim: #6b6f73;
+        --accent: #4e6b50;
+        --accent2: #7a5e3e;
+        --line: rgba(0, 0, 0, 0.12);
+        --shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+      }
+
+      html,
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: var(--body);
+        line-height: 1.6;
+        scroll-behavior: smooth;
+      }
+      h1,
+      h2,
+      h3,
+      h4 {
+        font-family: var(--serif);
+        font-weight: 400;
+      }
+      .wrap {
+        width: 100%;
+        max-width: var(--maxw);
+        margin: 0 auto;
+        padding: 0 16px;
+      }
+
+      header {
+        position: sticky;
+        top: 0;
+        background: var(--panel);
+        border-bottom: 1px solid var(--line);
+        box-shadow: var(--shadow);
+        z-index: 10;
+      }
+      .header-inner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 0;
+      }
+
+      .brand h1 {
+        margin: 0;
+        font-size: 20px;
+      }
+      .brand h1 a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+      .brand .sub {
+        margin: 2px 0 0;
+        font-size: 13px;
+        color: var(--ink-dim);
+      }
+
+      #themeToggle {
+        border: 1px solid var(--line);
+        background: var(--bg);
+        color: var(--ink);
+        padding: 8px 14px;
+        border-radius: 999px;
+        font-size: 13px;
+        cursor: pointer;
+      }
+
+      main {
+        padding: 24px 0 8px;
+      }
+      section[id] {
+        scroll-margin-top: 64px;
+      }
+
+      .grid {
+        display: grid;
+        gap: 16px;
+        grid-template-columns: repeat(2, 1fr);
+      }
+      @media (max-width: 900px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .card,
+      .app-card {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        box-shadow: var(--shadow);
+        padding: 16px;
+      }
+      .card h2,
+      .app-card h3 {
+        margin: 2px 0 6px;
+        font-size: 16px;
+        font-weight: 500;
+        letter-spacing: 0.1px;
+        color: var(--accent);
+      }
+      .card p,
+      .app-version {
+        font-size: 14px;
+        color: var(--ink-dim);
+      }
+
+      .button {
+        display: inline-block;
+        padding: 8px 14px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        text-decoration: none;
+        color: var(--ink);
+        background: var(--bg);
+        font-size: 13px;
+        text-align: center;
+        transition: box-shadow 0.2s, border-color 0.2s, transform 0.2s;
+      }
+      .button:hover {
+        border-color: var(--accent);
+        box-shadow: 0 0 12px rgba(167, 208, 177, 0.18);
+        transform: translateY(-1px);
+      }
+
+      .downloads {
+        padding: 28px 0 8px;
+      }
+      .downloads h2 {
+        text-align: center;
+        color: var(--accent);
+        font-size: 18px;
+        margin: 0 0 6px;
+      }
+      .downloads p.intro {
+        text-align: center;
+        color: var(--ink-dim);
+        font-size: 14px;
+        margin: 0 0 18px;
+      }
+
+      .app-head {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        margin-bottom: 8px;
+      }
+      .app-title {
+        font-size: 16px;
+        color: var(--accent2);
+      }
+      .btn-row {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 8px;
+        margin-top: 8px;
+      }
+
+      .notes {
+        margin: 18px auto 10px;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        box-shadow: var(--shadow);
+        padding: 16px;
+        font-size: 13px;
+        color: var(--ink-dim);
+        max-width: 760px;
+      }
+      .notes h4 {
+        margin: 0 0 8px;
+        color: var(--accent);
+        font-size: 14px;
+      }
+      code {
+        font-family: var(--mono);
+        font-size: 12.5px;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.09);
+        padding: 1px 5px;
+        border-radius: 6px;
+      }
+
+      footer {
+        border-top: 1px solid var(--line);
+        text-align: center;
+        padding: 14px 16px 24px;
+        color: var(--ink-dim);
+        font-size: 13px;
+        margin-top: 18px;
+      }
+      .contact {
+        margin-top: 6px;
+      }
+      .contact a {
+        color: var(--accent2);
+        text-decoration: none;
+        border-bottom: 1px dotted var(--accent2);
+      }
+      .contact a:hover {
+        opacity: 0.9;
+      }
+
+      a {
+        color: var(--accent2);
+        text-decoration: none;
+      }
+      a:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="wrap header-inner">
+        <div class="brand">
+          <h1><a href="/" aria-label="ClaritySuite home">ClaritySuite</a></h1>
+          <div class="sub">Tools for Focus, Craft, and Calm</div>
+        </div>
+        <button id="themeToggle" type="button" aria-label="Toggle theme">
+          Theme
+        </button>
+      </div>
+    </header>
+
+    <main id="main">
+      <section id="intro">
+        <div
+          class="wrap"
+          style="max-width: 760px; margin-top: 24px; margin-bottom: 12px"
+        >
+          <p
+            style="
+              text-align: center;
+              color: var(--ink-dim);
+              font-size: 15px;
+              margin-bottom: 20px;
+            "
+          >
+            ClaritySuite is a collection of minimal, local-first applications
+            designed for deep focus and productivity.<br />
+            Runs fully on your device. No accounts. No telemetry.
+          </p>
+          <div style="text-align: center">
+            <a
+              class="button"
+              href="https://claritybase.app/readme.html"
+              target="_blank"
+              rel="noopener noreferrer"
+              >Read the Full Story →</a
+            >
+          </div>
+        </div>
+      </section>
+
+      <section id="web">
+        <div class="wrap">
+          <div class="grid" role="list">
+            <article class="card" role="listitem">
+              <h2>ClarityEditor</h2>
+              <p>Distraction-free, local-first writing and note-taking.</p>
+              <a
+                class="button"
+                href="https://clarityeditor.show"
+                target="_blank"
+                rel="noopener noreferrer"
+                >Open Editor →</a
+              >
+            </article>
+            <article class="card" role="listitem">
+              <h2>ClarityHub</h2>
+              <p>Productivity, journaling, and daily planning system.</p>
+              <a
+                class="button"
+                href="https://clarityhub.show"
+                target="_blank"
+                rel="noopener noreferrer"
+                >Open Hub →</a
+              >
+            </article>
+            <article class="card" role="listitem">
+              <h2>ClarityToybox</h2>
+              <p>Calm games for reflection, rest, and mental reset.</p>
+              <a
+                class="button"
+                href="https://claritytoybox.show"
+                target="_blank"
+                rel="noopener noreferrer"
+                >Open Toybox →</a
+              >
+            </article>
+            <article class="card" role="listitem">
+              <h2>ClarityForge</h2>
+              <p>Fast tools for text transformation and data wrangling.</p>
+              <a
+                class="button"
+                href="https://clarityforge.show"
+                target="_blank"
+                rel="noopener noreferrer"
+                >Open Forge →</a
+              >
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section id="desktop" class="downloads">
+        <div class="wrap">
+          <h2>ClaritySuite on your Computer</h2>
+          <p class="intro">
+            macOS Universal (Intel + Apple Silicon). Linux and Windows coming
+            soon.
+          </p>
+
+          <div class="grid" role="list">
+            <article class="app-card" role="listitem">
+              <div class="app-head">
+                <h3 class="app-title">ClarityEditor Desktop</h3>
+                <div class="app-version">v0.1</div>
+              </div>
+              <div class="btn-row">
+                <a
+                  class="button"
+                  href="https://github.com/mnani87/claritysuite/releases/download/v0.1/ClarityEditor-0.1.0-universal.dmg"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  >macOS Universal (.dmg)</a
+                >
+              </div>
+            </article>
+            <article class="app-card" role="listitem">
+              <div class="app-head">
+                <h3 class="app-title">ClarityHub Desktop</h3>
+                <div class="app-version">v0.1</div>
+              </div>
+              <div class="btn-row">
+                <a
+                  class="button"
+                  href="https://github.com/mnani87/claritysuite/releases/download/v0.1/ClarityHub-0.1.0-universal.dmg"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  >macOS Universal (.dmg)</a
+                >
+              </div>
+            </article>
+            <article class="app-card" role="listitem">
+              <div class="app-head">
+                <h3 class="app-title">ClarityToybox Desktop</h3>
+                <div class="app-version">v0.1</div>
+              </div>
+              <div class="btn-row">
+                <a
+                  class="button"
+                  href="https://github.com/mnani87/claritysuite/releases/download/v0.1/ClarityToybox-0.1.0-universal.dmg"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  >macOS Universal (.dmg)</a
+                >
+              </div>
+            </article>
+            <article class="app-card" role="listitem">
+              <div class="app-head">
+                <h3 class="app-title">ClarityForge Desktop</h3>
+                <div class="app-version">v0.1</div>
+              </div>
+              <div class="btn-row">
+                <a
+                  class="button"
+                  href="https://github.com/mnani87/claritysuite/releases/download/v0.1/ClarityForge-0.1.0-universal.dmg"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  >macOS Universal (.dmg)</a
+                >
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section id="install">
+        <div class="wrap">
+          <div class="notes" aria-labelledby="install-notes">
+            <h4 id="install-notes">Install notes (macOS unsigned)</h4>
+            <ol>
+              <li>Open the DMG → drag the app into <em>Applications</em>.</li>
+              <li>
+                If blocked, run:
+                <code>sudo xattr -cr /Applications/Clarity*.app</code>.
+              </li>
+              <li>Right-click the app → <em>Open</em> → confirm once.</li>
+            </ol>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <div class="wrap">
+        <div class="contact">
+          Questions or feedback?
+          <a href="mailto:hello@claritybase.app">Contact Us</a>
+        </div>
+        <div>
+          ClaritySuite v0.1 · Released Nov 2025 · Tools for Focus, Craft, and
+          Calm ·
+          <a
+            href="https://opensource.org/license/mit"
+            target="_blank"
+            rel="noopener noreferrer"
+            >MIT License</a
+          >
+          · © mnani87 2025
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      const prefersDark =
+        window.matchMedia &&
+        window.matchMedia("(prefers-color-scheme: dark)").matches;
+      const saved = localStorage.getItem("claritysuite_theme");
+      document.documentElement.setAttribute(
+        "data-theme",
+        saved || (prefersDark ? "dark" : "light")
+      );
+      document.getElementById("themeToggle").addEventListener("click", () => {
+        const curr =
+          document.documentElement.getAttribute("data-theme") || "dark";
+        const next = curr === "light" ? "dark" : "light";
+        document.documentElement.setAttribute("data-theme", next);
+        localStorage.setItem("claritysuite_theme", next);
+      });
+    </script>
+  </body>
+</html>

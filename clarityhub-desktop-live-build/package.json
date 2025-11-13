@@ -1,0 +1,48 @@
+{
+  "name": "clarityhub",
+  "version": "0.1.0",
+  "productName": "ClarityHub",
+  "description": "Local-first productivity and journaling system from ClaritySuite.",
+  "author": "Mihir Naniwadekar",
+  "license": "MIT",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder"
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^24.9.0"
+  },
+  "build": {
+    "appId": "app.claritysuite.clarityhub",
+    "productName": "ClarityHub",
+    "files": [
+      "app.html",
+      "main.js",
+      "preload.js",
+      "logo.*",
+      "node_modules/**/*",
+      "package.json"
+    ],
+    "mac": {
+      "category": "public.app-category.productivity",
+      "icon": "logo.icns",
+      "identity": null,
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "universal"
+          ]
+        }
+      ]
+    },
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "icon": "logo.png"
+    }
+  }
+}

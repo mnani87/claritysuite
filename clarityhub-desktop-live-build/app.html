@@ -1,0 +1,1944 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>ClarityHub</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <meta
+      name="description"
+      content="ClarityHub · Local-first productivity hub: Notes, Matrix, Calendar, Journal. Electron desktop app."
+    />
+    <style>
+      :root {
+        --bg: #000;
+        --panel: #0a0f11;
+        --ink: #e6f7ef;
+        --ink-dim: rgba(180, 255, 230, 0.75);
+        --accent: #00ffff;
+        --accent2: #4e6b50;
+        --line: rgba(0, 255, 255, 0.2);
+        --muted: #071014;
+        --r-sm: 10px;
+        --r-lg: 18px;
+        --card: var(--panel);
+        --ring: rgba(0, 255, 255, 0.25);
+        --shadow: 0 0 14px rgba(0, 255, 255, 0.25);
+        --body: "Optima", "Palatino", "Palatino Linotype", "Book Antiqua",
+          "Charter", "Georgia", serif;
+      }
+      [data-theme="dark"] {
+        --bg: #0f1113;
+        --ink: #eaeaea;
+        --ink-dim: #a7abb0;
+        --line: rgba(255, 255, 255, 0.14);
+        --card: #13161a;
+        --shadow: 0 2px 12px rgba(0, 0, 0, 0.45);
+        --accent: #a7d0b1;
+        --accent2: #c8b39a;
+      }
+      [data-theme="light"] {
+        --bg: #f7f5ef;
+        --ink: #1e2328;
+        --ink-dim: #6b6f73;
+        --line: rgba(0, 0, 0, 0.12);
+        --card: #ffffff;
+        --accent: #4e6b50;
+        --accent2: #7a5e3e;
+        --ring: rgba(78, 107, 80, 0.25);
+        --shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+        color-scheme: light;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: var(--body);
+        line-height: 1.6;
+        display: flex;
+        flex-direction: column;
+      }
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.8rem 1rem;
+        border-bottom: 1px solid var(--line);
+        background: var(--bg);
+        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.15);
+      }
+      .brand {
+        display: flex;
+        gap: 0.75rem;
+        align-items: baseline;
+      }
+      .brand h1 {
+        margin: 0;
+        font-size: 1.05rem;
+        color: var(--accent);
+        text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+      }
+      .brand .sub {
+        font-size: 0.8rem;
+        color: var(--ink-dim);
+      }
+      .tabs {
+        display: flex;
+        gap: 0.5rem;
+        padding: 0.6rem;
+        border-bottom: 1px solid var(--line);
+        background: var(--bg);
+        overflow: auto;
+      }
+      .tab {
+        background: var(--card);
+        border: 1px solid var(--line);
+        color: var(--ink);
+        padding: 0.45rem 0.8rem;
+        border-radius: 999px;
+        cursor: pointer;
+        user-select: none;
+      }
+      .tab.active {
+        outline: 2px solid var(--accent);
+        box-shadow: var(--shadow);
+        transition: 0.2s;
+      }
+      main {
+        flex: 1 1 auto;
+        display: flex;
+        padding: 1rem;
+        gap: 1rem;
+        overflow: auto;
+      }
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: var(--r-lg);
+        box-shadow: var(--shadow);
+        background: var(--card);
+      }
+      .section {
+        padding: 1rem;
+      }
+      .col {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+      .left {
+        flex: 0 0 320px;
+      }
+      .right {
+        flex: 1 1 auto;
+        min-width: 0;
+      }
+      .row {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      button {
+        font: 0.85rem/1.2 ui-monospace, SFMono-Regular, Menlo, Consolas,
+          "Liberation Mono", monospace;
+        background: var(--bg);
+        color: var(--ink);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 0.5rem 0.7rem;
+        cursor: pointer;
+        box-shadow: 0 0 8px rgba(0, 255, 255, 0.1);
+      }
+      button:hover {
+        background: var(--muted);
+        border-color: var(--accent);
+        box-shadow: 0 0 6px var(--ring);
+        transition: 0.2s;
+      }
+      select,
+      input[type="text"],
+      input[type="date"],
+      input[type="time"],
+      textarea {
+        background: var(--bg);
+        color: var(--ink);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 0.45rem 0.6rem;
+        width: 100%;
+        font-family: var(--body);
+      }
+      label {
+        font-size: 0.85rem;
+        color: var(--ink-dim);
+      }
+      .pill {
+        padding: 0.15rem 0.5rem;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        font-size: 0.72rem;
+        color: var(--ink-dim);
+        background: var(--bg);
+      }
+      .muted {
+        color: var(--ink-dim);
+      }
+      .danger {
+        color: #ff5c7a;
+      }
+      ul.list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+
+      /* Notes writer */
+      .writer-grid {
+        display: grid;
+        grid-template-columns: 240px 1fr 1fr;
+        gap: 0.8rem;
+        align-items: stretch;
+      }
+      @media (max-width: 1100px) {
+        .writer-grid {
+          grid-template-columns: 1fr 1fr;
+        }
+        .outline {
+          display: none;
+        }
+      }
+      .outline {
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 0.6rem;
+        background: var(--bg);
+        max-height: 70vh;
+        overflow: auto;
+      }
+      .outline h3 {
+        margin: 0.2rem 0 0.4rem;
+        font-size: 0.95rem;
+        color: var(--accent);
+        font-weight: 400;
+      }
+      .outline ul {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .outline li {
+        padding: 4px 6px;
+        border-radius: 8px;
+        cursor: pointer;
+      }
+      .outline li:hover {
+        background: rgba(0, 0, 0, 0.08);
+      }
+      .drag-over-above {
+        box-shadow: inset 0 3px 0 var(--accent);
+      }
+      .drag-over-below {
+        box-shadow: inset 0 -3px 0 var(--accent);
+      }
+      .editor {
+        min-height: 70vh;
+        width: 100%;
+        resize: vertical;
+        font: 0.95rem/1.5 "Iosevka Web", "SFMono-Regular", ui-monospace,
+          monospace;
+        background: var(--bg);
+      }
+      #mdPreview {
+        min-height: 70vh;
+        overflow: auto;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 0.8rem;
+        background: var(--bg);
+      }
+
+      /* Matrix */
+      .matrix {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: 1fr 1fr;
+      }
+      @media (max-width: 850px) {
+        .matrix {
+          grid-template-columns: 1fr;
+        }
+        .left {
+          flex: 0 0 100%;
+        }
+      }
+      .quad {
+        display: grid;
+        grid-template-rows: auto 1fr auto auto;
+        gap: 8px;
+        min-height: 280px;
+      }
+      .quad h2 {
+        font-family: var(--body);
+        font-size: 1.15rem;
+        margin: 0;
+        color: var(--accent);
+      }
+      .count {
+        font-size: 0.85rem;
+        color: var(--ink-dim);
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 2px 8px;
+        margin-left: 8px;
+      }
+      .task {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 8px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--bg);
+        padding: 8px;
+        cursor: grab;
+      }
+      .task .text {
+        min-height: 1.1rem;
+        outline: none;
+      }
+      .task.done {
+        opacity: 0.55;
+      }
+
+      /* Calendar */
+      .panes {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+      @media (max-width: 900px) {
+        .panes {
+          grid-template-columns: 1fr;
+        }
+      }
+      .cal-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 6px;
+      }
+      .day {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--card);
+        padding: 8px;
+        display: grid;
+        grid-template-rows: auto 1fr;
+        gap: 6px;
+        min-height: 90px;
+        text-align: right;
+        position: relative;
+        transition: outline 0.1s;
+      }
+      .day.muted {
+        opacity: 0.35;
+      }
+      .dnum {
+        font-variant-numeric: tabular-nums;
+        font-size: 0.9rem;
+        position: absolute;
+        top: 4px;
+        right: 4px;
+        color: var(--ink-dim);
+      }
+      .day-content {
+        margin-top: 1.2rem;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        max-height: 70px;
+        overflow: hidden;
+      }
+      .day-event-badge {
+        font-size: 0.7rem;
+        line-height: 1.2;
+        padding: 1px 3px;
+        border-radius: 4px;
+        background: rgba(0, 255, 255, 0.1);
+        border: 1px solid var(--line);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        cursor: help;
+        color: var(--ink);
+      }
+      .day-task-badge {
+        font-size: 0.7rem;
+        line-height: 1.2;
+        padding: 1px 3px;
+        border-radius: 4px;
+        background: rgba(78, 107, 80, 0.2);
+        border: 1px solid var(--accent2);
+        color: var(--accent2);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        cursor: default;
+      }
+      .day.active {
+        outline: 2px solid var(--ring);
+        outline-offset: 2px;
+      }
+      .day.today {
+        border-color: var(--accent);
+        box-shadow: 0 0 6px var(--accent);
+      }
+      .agenda {
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 0.6rem;
+        background: var(--bg);
+        max-height: 60vh;
+        overflow: auto;
+      }
+      .agenda h3 {
+        margin: 0 0 0.4rem 0;
+        color: var(--accent);
+        font-size: 0.95rem;
+      }
+
+      /* Journal */
+      #jText {
+        min-height: 50vh;
+        resize: vertical;
+      }
+      #jView {
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 0.8rem;
+        background: var(--bg);
+        min-height: 50vh;
+        overflow: auto;
+      }
+
+      /* Print (browser only, kept harmless in Electron) */
+      @media print {
+        header,
+        .tabs,
+        .left,
+        footer,
+        #view-matrix,
+        #view-calendar,
+        #view-journal {
+          display: none !important;
+        }
+        #view-files {
+          display: block !important;
+        }
+        #mdPreview {
+          display: block !important;
+          border: 0;
+          box-shadow: none;
+        }
+        @page {
+          size: A4;
+          margin: 20mm 18mm 24mm 18mm;
+        }
+      }
+
+      /* Save banner */
+      #saveBanner {
+        position: fixed;
+        bottom: 10px;
+        right: 10px;
+        background: var(--accent2);
+        color: var(--bg);
+        padding: 6px 10px;
+        border-radius: 8px;
+        opacity: 0;
+        transition: opacity 0.3s;
+        z-index: 9999;
+      }
+
+      footer {
+        border-top: 1px solid var(--line);
+        padding: 0.6rem 1rem;
+        text-align: right;
+        background: var(--bg);
+      }
+      footer small {
+        color: var(--ink-dim);
+      }
+
+      .file {
+        padding: 4px 6px;
+        border-radius: 6px;
+        cursor: pointer;
+      }
+      .file:hover {
+        background: rgba(0, 255, 255, 0.08);
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="brand">
+        <h1>ClarityHub</h1>
+        <div class="sub" id="status-sub">Electron desktop</div>
+      </div>
+      <div class="row">
+        <button id="btnTogglePreview" title="Toggle Markdown preview">
+          Preview: On
+        </button>
+        <button class="tab" id="theme" title="Toggle Light/Dark Theme">
+          Theme
+        </button>
+        <div class="pill" id="gateBadge">Desktop</div>
+        <button id="btnExportState" title="Export backup">Backup</button>
+        <input
+          type="file"
+          id="btnImportState"
+          accept=".json"
+          style="display: none"
+        />
+        <button id="btnImportTrigger" title="Import backup">Restore</button>
+      </div>
+    </header>
+
+    <div class="tabs">
+      <div class="tab active" data-tab="files">Notes & Files</div>
+      <div class="tab" data-tab="matrix">Matrix</div>
+      <div class="tab" data-tab="calendar">Calendar</div>
+      <div class="tab" data-tab="journal">Journal</div>
+    </div>
+
+    <main>
+      <div class="col left">
+        <div class="panel section" id="files-left-panel">
+          <h2>Folders</h2>
+          <div class="row">
+            <button id="btnConnect">+ Connect Folder</button>
+            <span class="pill" id="permStatus">no folders</span>
+          </div>
+          <label style="margin-top: 0.8rem">Connected</label>
+          <div
+            id="folderList"
+            class="list"
+            style="
+              max-height: 36vh;
+              overflow: auto;
+              border: 1px solid var(--line);
+              border-radius: 10px;
+              padding: 0.4rem;
+            "
+          ></div>
+          <div class="row" style="margin-top: 0.8rem">
+            <button id="btnRescan">Reload</button>
+            <button id="btnForget" class="danger">Forget Selected</button>
+          </div>
+        </div>
+
+        <div class="panel section">
+          <h2>Files</h2>
+          <div class="row">
+            <select id="folderSelect"></select>
+            <button id="btnListFiles">List</button>
+          </div>
+          <div
+            id="fileList"
+            class="list"
+            style="
+              min-height: 180px;
+              max-height: 35vh;
+              overflow: auto;
+              border: 1px solid var(--line);
+              border-radius: 10px;
+              padding: 0.4rem;
+            "
+          ></div>
+          <div class="row" style="margin-top: 0.6rem">
+            <input
+              id="newFileName"
+              placeholder="new file name (e.g., notes.md)"
+            />
+            <button id="btnNewFile">Save as</button>
+          </div>
+          <div class="row" style="margin-top: 0.6rem">
+            <input type="file" id="localImport" />
+            <button id="btnUploadToFolder">Upload to folder</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="col right">
+        <div id="view-files" class="panel section" style="display: block">
+          <h2>Notes Editor</h2>
+          <div class="path" id="pathLabel">No file open</div>
+          <div class="row" style="margin: 0.4rem 0">
+            <button id="btnOpen" title="List files in selected folder">
+              Open
+            </button>
+            <button id="btnSave" title="Save">Save</button>
+            <button id="btnSaveAs" title="Save As">Save As</button>
+            <button id="btnExportPDF" title="Export preview as PDF">
+              Export PDF
+            </button>
+            <span class="pill">
+              Speech:
+              <span id="speechState">disabled (desktop)</span>
+            </span>
+            <button id="btnStartRec">Start Dictation</button>
+            <button id="btnStopRec">Stop</button>
+          </div>
+
+          <div class="writer-grid" id="editorWrap">
+            <div class="outline" id="outlinePane" aria-label="Outline">
+              <h3>Outline</h3>
+              <ul id="outlineList"></ul>
+              <div class="muted" style="margin-top: 0.4rem">
+                Drag headings to reorder sections
+              </div>
+            </div>
+
+            <textarea
+              id="editor"
+              class="editor"
+              placeholder="# Title
+
+Write here.
+- Use Markdown
+- Drag headings in Outline to reorder
+"
+            ></textarea>
+
+            <div id="mdPreview" aria-label="Markdown Preview"></div>
+          </div>
+        </div>
+
+        <div id="view-matrix" class="panel section" style="display: none">
+          <h2>Eisenhower Matrix</h2>
+          <div class="matrix">
+            <div class="card quad" data-q="q1">
+              <h2>
+                Important and Urgent - do now
+                <span class="count" data-count="q1">0</span>
+              </h2>
+              <ul class="list" id="q1"></ul>
+              <div class="composer">
+                <input data-in="q1" type="text" placeholder="Add task" />
+                <input data-date="q1" type="date" title="Due (optional)" />
+                <button class="btn" data-add="q1">Add</button>
+              </div>
+              <div class="hint"></div>
+            </div>
+            <div class="card quad" data-q="q2">
+              <h2>
+                Important but Not Urgent - plan and schedule
+                <span class="count" data-count="q2">0</span>
+              </h2>
+              <ul class="list" id="q2"></ul>
+              <div class="composer">
+                <input data-in="q2" type="text" placeholder="Add task" />
+                <input data-date="q2" type="date" />
+                <button class="btn" data-add="q2">Add</button>
+              </div>
+              <div class="hint"></div>
+            </div>
+            <div class="card quad" data-q="q3">
+              <h2>
+                Urgent but Not Important - delegate
+                <span class="count" data-count="q3">0</span>
+              </h2>
+              <ul class="list" id="q3"></ul>
+              <div class="composer">
+                <input data-in="q3" type="text" placeholder="Add task" />
+                <input data-date="q3" type="date" />
+                <button class="btn" data-add="q3">Add</button>
+              </div>
+              <div class="hint"></div>
+            </div>
+            <div class="card quad" data-q="q4">
+              <h2>
+                Neither Urgent Nor Important - eliminate
+                <span class="count" data-count="q4">0</span>
+              </h2>
+              <ul class="list" id="q4"></ul>
+              <div class="composer">
+                <input data-in="q4" type="text" placeholder="Add task" />
+                <input data-date="q4" type="date" />
+                <button class="btn" data-add="q4">Add</button>
+              </div>
+              <div class="hint"></div>
+            </div>
+          </div>
+        </div>
+
+        <div id="view-calendar" class="panel section" style="display: none">
+          <h2>Calendar</h2>
+          <div class="row" style="margin-bottom: 0.6rem">
+            <button id="calPrev">◀</button>
+            <div class="pill" id="calLabel">Month YYYY</div>
+            <button id="calNext">▶</button>
+            <button id="calToday">Today</button>
+            <span style="flex: 1"></span>
+            <button id="calExport">Export .ics</button>
+            <input type="file" id="calImport" accept=".ics,text/calendar" />
+          </div>
+          <div class="row" style="gap: 1rem">
+            <div style="flex: 2">
+              <div class="cal-grid" id="calGrid"></div>
+              <div
+                class="panel section"
+                style="margin-top: 1rem; background: var(--bg)"
+              >
+                <h3>Day Summary for <span id="activeISO"></span></h3>
+                <ul
+                  id="daySummaryList"
+                  class="list"
+                  style="max-height: 20vh; margin-top: 8px"
+                ></ul>
+                <div class="row" style="margin-top: 8px">
+                  <input
+                    id="noteText"
+                    placeholder="Add new note or reminder"
+                    style="flex: 1"
+                  />
+                  <button class="btn" id="addNote">Add</button>
+                </div>
+              </div>
+            </div>
+            <div style="flex: 1">
+              <div class="panel section" style="background: var(--bg)">
+                <h3>New Event</h3>
+                <label>Title</label><input id="evTitle" />
+                <div class="row">
+                  <div style="flex: 1">
+                    <label>Start Date</label><input type="date" id="evDate" />
+                  </div>
+                  <div style="flex: 1">
+                    <label>Start Time</label><input type="time" id="evTime" />
+                  </div>
+                </div>
+                <div class="row">
+                  <div style="flex: 1">
+                    <label>End Date (Optional)</label
+                    ><input type="date" id="evEndDate" />
+                  </div>
+                  <div style="flex: 1">
+                    <label>End Time (Optional)</label
+                    ><input type="time" id="evEndTime" />
+                  </div>
+                </div>
+                <label>Repeat</label>
+                <select id="evRepeat">
+                  <option value="none">None</option>
+                  <option value="daily">Daily ×10</option>
+                  <option value="weekly">Weekly ×10</option>
+                </select>
+                <label>Notes</label><input id="evNotes" />
+                <div class="row" style="margin-top: 0.6rem">
+                  <button id="addEvent">Add</button>
+                </div>
+              </div>
+              <div class="agenda" style="margin-top: 1rem">
+                <h3>Agenda (next 30 days)</h3>
+                <div
+                  id="agendaList"
+                  class="list"
+                  style="max-height: none"
+                ></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="view-journal" class="panel section" style="display: none">
+          <h2>Journal</h2>
+          <div
+            class="row"
+            style="justify-content: space-between; align-items: center"
+          >
+            <h3 style="margin: 0">Date-based Markdown Editor</h3>
+            <div class="row">
+              <input type="date" id="jDate" />
+              <button class="btn" id="jSave">Save</button>
+            </div>
+          </div>
+          <div class="panes" style="margin-top: 8px">
+            <textarea
+              id="jText"
+              placeholder="Write. Markdown supported: # Headings, **bold**, *italic*, - lists"
+            ></textarea>
+            <div id="jView" class="preview"></div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <footer>
+      <small>ClarityHub v0.1 · Electron local-first · Personal use</small>
+    </footer>
+
+    <div id="saveBanner" style="display: none">Saved ✓</div>
+
+    <script>
+      /* ====================== CORE UTILS ====================== */
+      const isElectron =
+        typeof window !== "undefined" &&
+        window.electronAPI &&
+        window.electronAPI.isElectron;
+
+      if (!isElectron) {
+        alert(
+          "This build is for Electron only. Run via Electron, not the browser."
+        );
+      }
+
+      function todayISO() {
+        return new Date().toISOString().slice(0, 10);
+      }
+      function toISO(d) {
+        return new Date(d.getTime() - d.getTimezoneOffset() * 60000)
+          .toISOString()
+          .slice(0, 10);
+      }
+      function escapeHTML(s) {
+        return (s || "").replace(
+          /[&<>"']/g,
+          (m) =>
+            ({
+              "&": "&amp;",
+              "<": "&lt;",
+              ">": "&gt;",
+              '"': "&quot;",
+              "'": "&#39;",
+            }[m])
+        );
+      }
+      function debounce(fn, ms) {
+        let t;
+        return (...a) => {
+          clearTimeout(t);
+          t = setTimeout(() => fn.apply(null, a), ms);
+        };
+      }
+      function flashSaved() {
+        const b = document.getElementById("saveBanner");
+        if (!b) return;
+        b.style.display = "block";
+        b.style.opacity = "1";
+        setTimeout(() => {
+          b.style.opacity = "0";
+        }, 1200);
+      }
+      function joinPath(dir, file) {
+        const sep = dir.includes("\\") ? "\\" : "/";
+        return dir.replace(/[\\/]+$/, "") + sep + file;
+      }
+
+      /* =================== STORAGE & STATE ==================== */
+      const storeKey = "clarityhub_state_v1";
+      const FOLDER_STORE_KEY = "clarityhub_folders";
+
+      let state = {
+        tasks: { q1: [], q2: [], q3: [], q4: [] },
+        calEvents: [],
+        dayNotes: {},
+        journal: {},
+      };
+
+      function loadAppState() {
+        const raw = localStorage.getItem(storeKey);
+        if (raw) {
+          try {
+            Object.assign(state, JSON.parse(raw));
+          } catch {}
+        }
+      }
+      function saveAppState() {
+        localStorage.setItem(storeKey, JSON.stringify(state));
+        updateCounts();
+        paintCalendar();
+        renderAgenda();
+        try {
+          flashSaved();
+        } catch (e) {}
+      }
+
+      function loadFolders() {
+        try {
+          return JSON.parse(localStorage.getItem(FOLDER_STORE_KEY) || "[]");
+        } catch {
+          return [];
+        }
+      }
+      function saveFolders(folders) {
+        localStorage.setItem(FOLDER_STORE_KEY, JSON.stringify(folders));
+      }
+
+      let folders = loadFolders(); // {id,name,path}
+      let current = { folderIdx: -1, fileName: "", fullPath: "" };
+      let isDirty = false;
+
+      /* ============ GATE (Electron-only) ============ */
+      (function gate() {
+        const badge = document.getElementById("gateBadge");
+        const statusSub = document.getElementById("status-sub");
+        if (badge) badge.textContent = "Electron desktop";
+        if (statusSub) statusSub.textContent = "ClarityHub · Electron desktop";
+      })();
+
+      /* ======================== TABS/THEME ======================== */
+      const tabViews = {
+        files: document.getElementById("view-files"),
+        matrix: document.getElementById("view-matrix"),
+        calendar: document.getElementById("view-calendar"),
+        journal: document.getElementById("view-journal"),
+      };
+      document.querySelectorAll(".tabs .tab").forEach((t) => {
+        t.addEventListener("click", () => {
+          document
+            .querySelectorAll(".tabs .tab")
+            .forEach((x) => x.classList.remove("active"));
+          t.classList.add("active");
+          const key = t.dataset.tab;
+          Object.entries(tabViews).forEach(([k, el]) => {
+            el.style.display = k === key ? "block" : "none";
+          });
+        });
+      });
+      const themeBtn = document.getElementById("theme");
+      const savedTheme = localStorage.getItem(storeKey + "_theme");
+      if (savedTheme)
+        document.documentElement.setAttribute("data-theme", savedTheme);
+      themeBtn.onclick = () => {
+        const curr =
+          document.documentElement.getAttribute("data-theme") || "dark";
+        const next = curr === "dark" ? "light" : "dark";
+        document.documentElement.setAttribute("data-theme", next);
+        localStorage.setItem(storeKey + "_theme", next);
+      };
+
+      /* ======================== FOLDERS / FILES ======================== */
+      const folderList = document.getElementById("folderList");
+      const folderSelect = document.getElementById("folderSelect");
+      const fileList = document.getElementById("fileList");
+      const permStatus = document.getElementById("permStatus");
+
+      function renderFolderList() {
+        folderList.innerHTML = "";
+        folderSelect.innerHTML = "";
+        folders.forEach((f, idx) => {
+          const div = document.createElement("div");
+          div.className = "file";
+          div.textContent = f.name;
+          div.onclick = () => {
+            folderSelect.value = String(idx);
+          };
+          folderList.appendChild(div);
+
+          const opt = document.createElement("option");
+          opt.value = String(idx);
+          opt.textContent = f.name;
+          folderSelect.appendChild(opt);
+        });
+        permStatus.textContent = folders.length
+          ? "folders: " + folders.length
+          : "no folders";
+      }
+
+      async function connectFolder() {
+        if (!isElectron || !window.electronAPI?.selectFolder) {
+          alert("Folder selection only works in the desktop app.");
+          return;
+        }
+        const res = await window.electronAPI.selectFolder();
+        if (!res || !res.path) return;
+        const existing = folders.find((f) => f.path === res.path);
+        if (existing) return;
+        const name = res.name || res.path.split(/[\\/]/).pop() || res.path;
+        folders.push({
+          id: "f_" + Date.now(),
+          name,
+          path: res.path,
+        });
+        saveFolders(folders);
+        renderFolderList();
+      }
+
+      async function listFiles() {
+        fileList.innerHTML = "";
+        const idx = Number(folderSelect.value);
+        if (!(idx >= 0)) return;
+        const folder = folders[idx];
+        if (!folder) return;
+        if (!window.electronAPI?.listFiles) {
+          alert("File listing not available.");
+          return;
+        }
+        const files = await window.electronAPI.listFiles(folder.path);
+        files.forEach((f) => {
+          const row = document.createElement("div");
+          row.className = "file";
+          row.textContent = f.name;
+          row.onclick = async () => {
+            const content = await window.electronAPI.readFile(f.fullPath);
+            editor.value = content ?? "";
+            current = {
+              folderIdx: idx,
+              fileName: f.name,
+              fullPath: f.fullPath,
+            };
+            isDirty = false;
+            updatePathLabel();
+            renderAll();
+          };
+          fileList.appendChild(row);
+        });
+      }
+
+      async function saveFile() {
+        if (!window.electronAPI?.writeFile) {
+          alert("Saving not available.");
+          return;
+        }
+        if (!current.fullPath) {
+          return saveFileAs();
+        }
+        const ok = await window.electronAPI.writeFile(
+          current.fullPath,
+          editor.value
+        );
+        if (!ok) {
+          alert("Failed to save file.");
+          return;
+        }
+        isDirty = false;
+        flashSaved();
+        updatePathLabel();
+      }
+
+      async function saveFileAs() {
+        if (!window.electronAPI?.saveDialog) {
+          alert("Save dialog not available.");
+          return;
+        }
+        const suggested =
+          document.getElementById("newFileName").value.trim() ||
+          current.fileName ||
+          "notes_" + todayISO() + ".md";
+        const fullPath = await window.electronAPI.saveDialog(suggested);
+        if (!fullPath) return;
+        const ok = await window.electronAPI.writeFile(fullPath, editor.value);
+        if (!ok) {
+          alert("Failed to save file.");
+          return;
+        }
+        const name = fullPath.split(/[\\/]/).pop() || suggested;
+        // Try to infer folder idx
+        let folderIdx = -1;
+        folders.forEach((f, i) => {
+          if (fullPath.startsWith(f.path)) folderIdx = i;
+        });
+        current = {
+          folderIdx,
+          fileName: name,
+          fullPath,
+        };
+        isDirty = false;
+        flashSaved();
+        updatePathLabel();
+        if (folderIdx >= 0) listFiles();
+      }
+
+      async function uploadToFolder() {
+        const f = document.getElementById("localImport").files?.[0];
+        const idx = Number(folderSelect.value);
+        if (!f || !(idx >= 0)) return;
+        const folder = folders[idx];
+        if (!folder) return;
+        const text = await f.text();
+        const fullPath = joinPath(folder.path, f.name);
+        const ok = await window.electronAPI.writeFile(fullPath, text);
+        if (!ok) {
+          alert("Upload failed.");
+          return;
+        }
+        listFiles();
+      }
+
+      function updatePathLabel() {
+        const pathLabel = document.getElementById("pathLabel");
+        if (current.fullPath) {
+          pathLabel.textContent =
+            current.fullPath + (isDirty ? " • unsaved" : "");
+        } else {
+          pathLabel.textContent =
+            (current.fileName || "No file open") +
+            (isDirty ? " • unsaved" : "");
+        }
+      }
+
+      document.getElementById("btnConnect").onclick = connectFolder;
+      document.getElementById("btnRescan").onclick = () => {
+        folders = loadFolders();
+        renderFolderList();
+      };
+      document.getElementById("btnForget").onclick = () => {
+        const idx = Number(folderSelect.value);
+        if (!(idx >= 0)) return;
+        folders.splice(idx, 1);
+        saveFolders(folders);
+        renderFolderList();
+      };
+      document.getElementById("btnListFiles").onclick = listFiles;
+      document.getElementById("btnOpen").onclick = listFiles;
+      document.getElementById("btnSave").onclick = saveFile;
+      document.getElementById("btnSaveAs").onclick = saveFileAs;
+      document.getElementById("btnNewFile").onclick = saveFileAs;
+      document.getElementById("btnUploadToFolder").onclick = uploadToFolder;
+
+      /* ======================== NOTES: Markdown, Outline, PDF ======================== */
+      const editor = document.getElementById("editor");
+      const pv = document.getElementById("mdPreview");
+      const ol = document.getElementById("outlineList");
+
+      function renderMarkdown(src) {
+        if (!src) return "";
+        src = src.replace(/```([\s\S]*?)```/g, (_, code) => {
+          return "<pre><code>" + escapeHTML(code) + "</code></pre>";
+        });
+        src = src.replace(/`([^`]+)`/g, (_, c) => {
+          return "<code>" + escapeHTML(c) + "</code>";
+        });
+        src = src
+          .replace(/^######\s*(.*)$/gm, "<h6>$1</h6>")
+          .replace(/^#####\s*(.*)$/gm, "<h5>$1</h5>")
+          .replace(/^####\s*(.*)$/gm, "<h4>$1</h4>")
+          .replace(/^###\s*(.*)$/gm, "<h3>$1</h3>")
+          .replace(/^##\s*(.*)$/gm, "<h2>$1</h2>")
+          .replace(/^#\s*(.*)$/gm, "<h1>$1</h1>");
+        src = src
+          .replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>")
+          .replace(/\*([^*]+)\*/g, "<i>$1</i>")
+          .replace(/~~([^~]+)~~/g, "<s>$1</s>");
+        src = src.replace(/^>\s?(.*)$/gm, "<blockquote>$1</blockquote>");
+        src = src.replace(/^---$/gm, "<hr>");
+        src = src
+          .replace(/^(\d+)\.\s+(.*)$/gm, "<ol start='$1'><li>$2</li></ol>")
+          .replace(/^[-*]\s+(.*)$/gm, "<ul><li>$1</li></ul>");
+        src = src.replace(
+          /^(?!<(h\d|ul|ol|li|pre|blockquote|hr))(.+)$/gm,
+          "<p>$2</p>"
+        );
+        src = src.replace(
+          /\[([^\]]+)\]\((https?:[^)]+)\)/g,
+          "<a href='$2' target='_blank' rel='noopener'>$1</a>"
+        );
+        return src;
+      }
+      function slugify(s) {
+        return (s || "")
+          .toLowerCase()
+          .trim()
+          .replace(/[^\w\s-]/g, "")
+          .replace(/\s+/g, "-")
+          .replace(/-+/g, "-");
+      }
+      function buildOutline(markdown) {
+        const lines = markdown.split(/\r?\n/);
+        const items = [];
+        const seen = new Map();
+        for (let i = 0; i < lines.length; i++) {
+          const m = lines[i].match(/^(#{1,4})\s+(.*)$/);
+          if (!m) continue;
+          const level = m[1].length;
+          const raw = m[2].trim();
+          const base = slugify(raw) || "section";
+          const n = (seen.get(base) || 0) + 1;
+          seen.set(base, n);
+          const id = n > 1 ? base + "-" + n : base;
+          items.push({ idx: i, level, title: raw, id });
+        }
+        return items;
+      }
+      function paintOutline() {
+        const items = buildOutline(editor.value);
+        ol.innerHTML = "";
+        items.forEach((it) => {
+          const li = document.createElement("li");
+          li.draggable = true;
+          li.dataset.idx = String(it.idx);
+          li.textContent =
+            (it.level === 1 ? "" : "".padEnd((it.level - 1) * 2, " ")) +
+            it.title;
+          li.style.paddingLeft = (it.level - 1) * 12 + "px";
+          li.addEventListener("click", () => {
+            const hs = pv.querySelectorAll("h1,h2,h3,h4");
+            for (const h of hs) {
+              if (h.textContent.trim() === it.title) {
+                h.scrollIntoView({ behavior: "smooth", block: "start" });
+                break;
+              }
+            }
+          });
+          li.addEventListener("dragstart", (e) => {
+            e.dataTransfer.setData("text/plain", JSON.stringify(it));
+            li.classList.add("dragging");
+          });
+          li.addEventListener("dragend", () => li.classList.remove("dragging"));
+          li.addEventListener("dragover", (e) => {
+            e.preventDefault();
+            const r = li.getBoundingClientRect();
+            const mid = r.top + r.height / 2;
+            li.classList.toggle("drag-over-above", e.clientY < mid);
+            li.classList.toggle("drag-over-below", e.clientY >= mid);
+          });
+          li.addEventListener("dragleave", () => {
+            li.classList.remove("drag-over-above", "drag-over-below");
+          });
+          li.addEventListener("drop", (e) => {
+            e.preventDefault();
+            const where = li.classList.contains("drag-over-below")
+              ? "below"
+              : "above";
+            li.classList.remove("drag-over-above", "drag-over-below");
+            try {
+              const src = JSON.parse(e.dataTransfer.getData("text/plain"));
+              reorderSection(src.idx, it.idx, where);
+            } catch {}
+          });
+          ol.appendChild(li);
+        });
+      }
+      function reorderSection(fromLineIdx, toLineIdx, where) {
+        const lines = editor.value.split(/\r?\n/);
+        const startMatch = lines[fromLineIdx]?.match(/^(#{1,4})\s+/);
+        if (!startMatch) return;
+        const fromLevel = startMatch[1].length;
+        let end = lines.length;
+        for (let i = fromLineIdx + 1; i < lines.length; i++) {
+          const m = lines[i].match(/^(#{1,4})\s+/);
+          if (m && m[1].length <= fromLevel) {
+            end = i;
+            break;
+          }
+        }
+        const block = lines.slice(fromLineIdx, end);
+        const restA = lines.slice(0, fromLineIdx);
+        const restB = lines.slice(end);
+        const without = restA.concat(restB);
+        let targetIdx = toLineIdx;
+        if (fromLineIdx < toLineIdx) targetIdx -= end - fromLineIdx;
+        if (where === "below") {
+          let tEnd = without.length;
+          const tStartMatch = without[targetIdx]?.match?.(/^(#{1,4})\s+/);
+          const tLevel = tStartMatch ? tStartMatch[1].length : 1;
+          for (let i = targetIdx + 1; i < without.length; i++) {
+            const m = without[i].match(/^(#{1,4})\s+/);
+            if (m && m[1].length <= tLevel) {
+              tEnd = i;
+              break;
+            }
+          }
+          editor.value = without
+            .slice(0, tEnd)
+            .concat(block, without.slice(tEnd))
+            .join("\n");
+        } else {
+          editor.value = without
+            .slice(0, targetIdx)
+            .concat(block, without.slice(targetIdx))
+            .join("\n");
+        }
+        isDirty = true;
+        updatePathLabel();
+        renderAll();
+      }
+      function renderAll() {
+        pv.innerHTML = renderMarkdown(editor.value);
+        paintOutline();
+      }
+      editor.addEventListener("input", () => {
+        isDirty = true;
+        updatePathLabel();
+        renderAll();
+      });
+      document.getElementById("btnTogglePreview").onclick = () => {
+        const btn = document.getElementById("btnTogglePreview");
+        const visible = pv.style.display !== "none";
+        pv.style.display = visible ? "none" : "block";
+        btn.textContent = "Preview: " + (visible ? "Off" : "On");
+      };
+
+      document.getElementById("btnExportPDF").onclick = async () => {
+        if (!window.electronAPI?.printToPDF) {
+          alert("PDF export not available.");
+          return;
+        }
+
+        // Use the rendered HTML from the preview pane
+        const contentHtml =
+          document.getElementById("mdPreview").innerHTML || "";
+        const title =
+          (current.fileName && current.fileName.replace(/\.[^/.]+$/, "")) ||
+          "ClarityHub note";
+
+        const res = await window.electronAPI.printToPDF({
+          title,
+          html: contentHtml,
+        });
+
+        if (!res) {
+          // cancelled or failed; nothing to do
+        }
+      };
+
+      /* ======================== MATRIX ======================== */
+      function addTask(q, text, due) {
+        const t = {
+          id: Date.now() + "_" + Math.random().toString(36).slice(2),
+          text,
+          due,
+          done: false,
+          ts: Date.now(),
+        };
+        state.tasks[q].unshift(t);
+        saveAppState();
+        renderMatrix();
+      }
+      function toggleTask(q, id) {
+        const arr = state.tasks[q];
+        const t = arr.find((x) => x.id === id);
+        if (t) {
+          t.done = !t.done;
+          saveAppState();
+          renderMatrix();
+        }
+      }
+      function delTask(q, id) {
+        state.tasks[q] = state.tasks[q].filter((x) => x.id !== id);
+        saveAppState();
+        renderMatrix();
+      }
+
+      function moveTask(taskId, sourceQuad, targetQuad) {
+        const sourceArr = state.tasks[sourceQuad];
+        const idx = sourceArr.findIndex((t) => t.id === taskId);
+        if (idx === -1) return;
+        const [task] = sourceArr.splice(idx, 1);
+        state.tasks[targetQuad].unshift(task);
+        saveAppState();
+        renderMatrix();
+      }
+
+      function setupMatrixDragAndDrop() {
+        ["q1", "q2", "q3", "q4"].forEach((q) => {
+          const list = document.getElementById(q);
+          list.addEventListener("dragover", (e) => {
+            e.preventDefault();
+            e.currentTarget.style.boxShadow = "0 0 10px 3px var(--accent)";
+          });
+          list.addEventListener("dragleave", (e) => {
+            e.currentTarget.style.boxShadow = "none";
+          });
+          list.addEventListener("drop", (e) => {
+            e.preventDefault();
+            e.currentTarget.style.boxShadow = "none";
+            const data = e.dataTransfer.getData("application/json");
+            try {
+              const { id, sourceQuad } = JSON.parse(data);
+              const targetQuad = list.id;
+              if (sourceQuad !== targetQuad) {
+                moveTask(id, sourceQuad, targetQuad);
+              }
+            } catch {}
+          });
+          list.addEventListener("dragstart", (e) => {
+            const li = e.target.closest(".task");
+            if (li) {
+              const payload = {
+                id: li.dataset.taskId,
+                sourceQuad: li.dataset.sourceQuad,
+              };
+              e.dataTransfer.setData(
+                "application/json",
+                JSON.stringify(payload)
+              );
+              e.dataTransfer.effectAllowed = "move";
+            }
+          });
+        });
+      }
+
+      function renderMatrix() {
+        ["q1", "q2", "q3", "q4"].forEach((q) => {
+          const ul = document.getElementById(q);
+          ul.innerHTML = "";
+          state.tasks[q].forEach((t) => {
+            const li = document.createElement("li");
+            li.className = "task" + (t.done ? " done" : "");
+            li.draggable = true;
+            li.dataset.taskId = t.id;
+            li.dataset.sourceQuad = q;
+
+            const text = document.createElement("div");
+            text.className = "text";
+            text.textContent = t.text + (t.due ? " (" + t.due + ")" : "");
+            const meta = document.createElement("div");
+            const chk = document.createElement("button");
+            chk.textContent = t.done ? "↺" : "✓";
+            chk.onclick = () => toggleTask(q, t.id);
+            const rm = document.createElement("button");
+            rm.textContent = "✕";
+            rm.onclick = () => delTask(q, t.id);
+            meta.appendChild(chk);
+            meta.appendChild(rm);
+            li.appendChild(text);
+            li.appendChild(meta);
+            ul.appendChild(li);
+          });
+          const el = document.querySelector(`[data-count="${q}"]`);
+          if (el) el.textContent = state.tasks[q].length;
+        });
+      }
+
+      document.querySelectorAll(".composer .btn").forEach((b) =>
+        b.addEventListener("click", () => {
+          const q = b.dataset.add;
+          const input = document.querySelector(`input[data-in="${q}"]`);
+          const d = document.querySelector(`input[data-date="${q}"]`);
+          if (!input.value.trim()) return;
+          addTask(q, input.value.trim(), d.value || "");
+          input.value = "";
+          if (d) d.value = "";
+        })
+      );
+      function updateCounts() {
+        ["q1", "q2", "q3", "q4"].forEach((q) => {
+          const el = document.querySelector(`[data-count="${q}"]`);
+          if (el) el.textContent = state.tasks[q].length;
+        });
+      }
+
+      /* ======================== CALENDAR ======================== */
+      let cal = { base: new Date(), activeISO: toISO(new Date()) };
+      function startOfMonth(d) {
+        return new Date(d.getFullYear(), d.getMonth(), 1);
+      }
+      function endOfMonth(d) {
+        return new Date(d.getFullYear(), d.getMonth() + 1, 0);
+      }
+      function sameDay(a, b) {
+        return (
+          a.getFullYear() === b.getFullYear() &&
+          a.getMonth() === b.getMonth() &&
+          a.getDate() === b.getDate()
+        );
+      }
+
+      function getDayItems(isoDate) {
+        const events = state.calEvents
+          .filter((e) => {
+            const start = e.date;
+            const end = e.endDate || e.date;
+            return isoDate >= start && isoDate <= end;
+          })
+          .map((e) => ({ type: "event", data: e }));
+
+        const tasks = ["q1", "q2", "q3", "q4"]
+          .flatMap((q) =>
+            state.tasks[q].filter((t) => t.due === isoDate && !t.done)
+          )
+          .map((t) => ({ type: "task", data: t }));
+
+        const notes = (state.dayNotes[isoDate] || []).map((text) => ({
+          type: "note",
+          data: text,
+        }));
+
+        return { events, tasks, notes };
+      }
+
+      function paintCalendar() {
+        const grid = document.getElementById("calGrid");
+        const label = document.getElementById("calLabel");
+        grid.innerHTML = "";
+        const base = startOfMonth(cal.base);
+        const end = endOfMonth(cal.base);
+        const firstDow = (base.getDay() + 6) % 7; // Mon=0
+        label.textContent = base.toLocaleString(undefined, {
+          month: "long",
+          year: "numeric",
+        });
+        const days = [];
+        for (let i = 0; i < firstDow; i++) {
+          const d = new Date(base);
+          d.setDate(d.getDate() - (firstDow - i));
+          days.push({ d, muted: true });
+        }
+        for (let d = 1; d <= end.getDate(); d++) {
+          days.push({
+            d: new Date(cal.base.getFullYear(), cal.base.getMonth(), d),
+            muted: false,
+          });
+        }
+        while (days.length % 7) {
+          const last = days[days.length - 1].d;
+          const nd = new Date(last);
+          nd.setDate(last.getDate() + 1);
+          days.push({ d: nd, muted: true });
+        }
+        const today = new Date();
+
+        days.forEach(({ d, muted }) => {
+          const isoDate = toISO(d);
+          const { events, tasks, notes } = getDayItems(isoDate);
+
+          const cell = document.createElement("div");
+          cell.className =
+            "day" +
+            (muted ? " muted" : "") +
+            (sameDay(d, today) ? " today" : "") +
+            (isoDate === cal.activeISO ? " active" : "");
+          const dn = document.createElement("div");
+          dn.className = "dnum";
+          dn.textContent = d.getDate();
+          cell.appendChild(dn);
+          const cont = document.createElement("div");
+          cont.className = "day-content";
+
+          events.forEach((e) => {
+            const eData = e.data;
+            const b = document.createElement("div");
+            b.className = "day-event-badge";
+            const timeRange = eData.time ? eData.time : "";
+            const title = (timeRange ? timeRange + " " : "") + eData.title;
+            b.title =
+              (eData.date !== eData.endDate
+                ? "[" + eData.date + " - " + eData.endDate + "] "
+                : "") + title;
+            b.textContent = title;
+            b.onclick = () => {
+              if (confirm("Delete this event?")) {
+                state.calEvents = state.calEvents.filter((x) => x !== eData);
+                saveAppState();
+                paintCalendar();
+              }
+            };
+            cont.appendChild(b);
+          });
+
+          tasks.forEach((t) => {
+            const b = document.createElement("div");
+            b.className = "day-task-badge";
+            b.title = t.data.text;
+            b.textContent = "• Task: " + t.data.text;
+            cont.appendChild(b);
+          });
+
+          if (notes.length > 0) {
+            const b = document.createElement("div");
+            b.className = "day-event-badge";
+            b.style.backgroundColor = "rgba(180, 255, 230, 0.1)";
+            b.style.borderColor = "rgba(180, 255, 230, 0.3)";
+            b.textContent = "(" + notes.length + " notes)";
+            cont.appendChild(b);
+          }
+
+          cell.appendChild(cont);
+          cell.onclick = () => setActiveDate(d);
+          grid.appendChild(cell);
+        });
+
+        if (!cal.activeISO) {
+          cal.activeISO = todayISO();
+        }
+        setActiveDate(new Date(cal.activeISO));
+        renderAgenda();
+      }
+
+      function setActiveDate(d) {
+        const iso = toISO(d);
+        cal.activeISO = iso;
+
+        document
+          .querySelectorAll("#calGrid .day")
+          .forEach((c) => c.classList.remove("active"));
+        const cells = document.querySelectorAll("#calGrid .day");
+        cells.forEach((cell) => {
+          const num = cell.querySelector(".dnum");
+          if (!num) return;
+          if (
+            Number(num.textContent) === d.getDate() &&
+            !cell.classList.contains("muted")
+          ) {
+            cell.classList.add("active");
+          }
+        });
+
+        document.getElementById("activeISO").textContent = iso;
+        const ul = document.getElementById("daySummaryList");
+        ul.innerHTML = "";
+
+        const { events, tasks, notes } = getDayItems(iso);
+
+        events.forEach((e) => {
+          const eData = e.data;
+          const li = document.createElement("li");
+          const timeInfo = eData.time ? eData.time : "";
+          const endInfo =
+            eData.endDate && eData.endDate !== iso
+              ? " - End: " + eData.endDate
+              : "";
+          li.textContent =
+            "[Event] " +
+            eData.title +
+            (timeInfo ? " " + timeInfo : "") +
+            endInfo +
+            (eData.notes ? " (" + eData.notes + ")" : "");
+          li.onclick = () => {
+            if (confirm("Delete this event?")) {
+              state.calEvents = state.calEvents.filter((x) => x !== eData);
+              saveAppState();
+              setActiveDate(d);
+            }
+          };
+          ul.appendChild(li);
+        });
+
+        tasks.forEach((t) => {
+          const tData = t.data;
+          const li = document.createElement("li");
+          const qMap = {
+            q1: "Urgent/Important",
+            q2: "Important/Plan",
+            q3: "Urgent/Delegate",
+            q4: "Neither/Eliminate",
+          };
+          const quad = Object.keys(state.tasks).find((q) =>
+            state.tasks[q].includes(tData)
+          );
+          li.textContent =
+            "[Task - " + (qMap[quad] || "Matrix") + "] " + tData.text;
+          li.onclick = () => {
+            if (
+              confirm(
+                "Mark this task as done? It will disappear from the calendar but stay in the matrix."
+              )
+            ) {
+              const q = Object.keys(state.tasks).find((qq) =>
+                state.tasks[qq].includes(tData)
+              );
+              if (q) toggleTask(q, tData.id);
+              setActiveDate(d);
+            }
+          };
+          ul.appendChild(li);
+        });
+
+        notes.forEach((text, i) => {
+          const li = document.createElement("li");
+          li.textContent = "[Note] " + text;
+          li.onclick = () => {
+            if (confirm("Delete note?")) {
+              state.dayNotes[iso] = state.dayNotes[iso].filter(
+                (_, j) => i !== j
+              );
+              saveAppState();
+              setActiveDate(d);
+            }
+          };
+          ul.appendChild(li);
+        });
+      }
+
+      function renderAgenda() {
+        const list = document.getElementById("agendaList");
+        if (!list) return;
+        list.innerHTML = "";
+        const base = new Date();
+        const lim = new Date();
+        lim.setDate(base.getDate() + 30);
+        const evs = state.calEvents
+          .filter((e) => new Date(e.date) >= base && new Date(e.date) <= lim)
+          .sort((a, b) =>
+            (a.date + " " + (a.time || "")).localeCompare(
+              b.date + " " + (b.time || "")
+            )
+          );
+        evs.forEach((e) => {
+          const row = document.createElement("div");
+          row.className = "file";
+          row.textContent =
+            e.date +
+            (e.time ? " " + e.time : "") +
+            (e.endDate && e.endDate !== e.date ? " -> " + e.endDate : "") +
+            " — " +
+            e.title;
+          list.appendChild(row);
+        });
+      }
+
+      document.getElementById("calPrev").onclick = () => {
+        cal.base.setMonth(cal.base.getMonth() - 1);
+        paintCalendar();
+      };
+      document.getElementById("calNext").onclick = () => {
+        cal.base.setMonth(cal.base.getMonth() + 1);
+        paintCalendar();
+      };
+      document.getElementById("calToday").onclick = () => {
+        cal.base = new Date();
+        cal.activeISO = todayISO();
+        paintCalendar();
+      };
+      document.getElementById("addNote").onclick = () => {
+        const iso =
+          document.getElementById("activeISO").textContent || todayISO();
+        const txt = document.getElementById("noteText").value.trim();
+        if (!txt) return;
+        state.dayNotes[iso] = state.dayNotes[iso] || [];
+        state.dayNotes[iso].push(txt);
+        document.getElementById("noteText").value = "";
+        saveAppState();
+        setActiveDate(new Date(iso));
+      };
+
+      document.getElementById("addEvent").onclick = () => {
+        const t = document.getElementById("evTitle").value.trim();
+        if (!t) return;
+        const d = document.getElementById("evDate").value || todayISO();
+        const tm = document.getElementById("evTime").value;
+        const ed = document.getElementById("evEndDate").value;
+        const etm = document.getElementById("evEndTime").value;
+        const rp = document.getElementById("evRepeat").value;
+        const notes = document.getElementById("evNotes").value;
+
+        const push = (date, endDate, endTime) =>
+          state.calEvents.push({
+            title: t,
+            date,
+            time: tm || "",
+            endDate: endDate || date,
+            endTime: endTime || "",
+            notes: notes || "",
+          });
+
+        if (rp === "daily") {
+          let dt = new Date(d);
+          for (let i = 0; i < 10; i++) {
+            push(toISO(dt), ed, etm);
+            dt.setDate(dt.getDate() + 1);
+          }
+        } else if (rp === "weekly") {
+          let dt = new Date(d);
+          for (let i = 0; i < 10; i++) {
+            push(toISO(dt), ed, etm);
+            dt.setDate(dt.getDate() + 7);
+          }
+        } else push(d, ed, etm);
+
+        document.getElementById("evTitle").value = "";
+        document.getElementById("evDate").value = "";
+        document.getElementById("evTime").value = "";
+        document.getElementById("evEndDate").value = "";
+        document.getElementById("evEndTime").value = "";
+        document.getElementById("evRepeat").value = "none";
+        document.getElementById("evNotes").value = "";
+
+        saveAppState();
+      };
+
+      document.getElementById("calExport").onclick = () => {
+        const lines = ["BEGIN:VCALENDAR", "VERSION:2.0"];
+        state.calEvents.forEach((e) => {
+          lines.push("BEGIN:VEVENT");
+          lines.push("SUMMARY:" + e.title.replace(/[,;]/g, " "));
+          if (e.time) {
+            const dtstart =
+              e.date.replace(/-/g, "") + "T" + e.time.replace(":", "") + "00";
+            lines.push("DTSTART:" + dtstart);
+            if (e.endDate && e.endTime) {
+              const dtend =
+                e.endDate.replace(/-/g, "") +
+                "T" +
+                e.endTime.replace(":", "") +
+                "00";
+              lines.push("DTEND:" + dtend);
+            }
+          } else {
+            lines.push("DTSTART;VALUE=DATE:" + e.date.replace(/-/g, ""));
+            if (e.endDate) {
+              lines.push("DTEND;VALUE=DATE:" + e.endDate.replace(/-/g, ""));
+            }
+          }
+          if (e.notes) {
+            lines.push("DESCRIPTION:" + e.notes.replace(/[,;]/g, " "));
+          }
+          lines.push("END:VEVENT");
+        });
+        lines.push("END:VCALENDAR");
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(
+          new Blob([lines.join("\r\n")], {
+            type: "text/calendar",
+          })
+        );
+        a.download = "clarityhub.ics";
+        a.click();
+        URL.revokeObjectURL(a.href);
+      };
+
+      document
+        .getElementById("calImport")
+        .addEventListener("change", async (e) => {
+          const f = e.target.files?.[0];
+          if (!f) return;
+          const text = await f.text();
+          const evs = [];
+          const re = /BEGIN:VEVENT([\s\S]*?)END:VEVENT/gm;
+          let m;
+          while ((m = re.exec(text))) {
+            const blk = m[1];
+            const s = /SUMMARY:(.*)/.exec(blk)?.[1]?.trim() || "Event";
+            const d1 = /DTSTART;VALUE=DATE:(\d{8})/.exec(blk)?.[1];
+            const d2 = /DTSTART:(\d{8})T(\d{6})/.exec(blk);
+            const e1 = /DTEND;VALUE=DATE:(\d{8})/.exec(blk)?.[1];
+            const e2 = /DTEND:(\d{8})T(\d{6})/.exec(blk);
+
+            let date,
+              time = "";
+            let endDate,
+              endTime = "";
+
+            if (d1) {
+              date =
+                d1.slice(0, 4) + "-" + d1.slice(4, 6) + "-" + d1.slice(6, 8);
+            } else if (d2) {
+              date =
+                d2[1].slice(0, 4) +
+                "-" +
+                d2[1].slice(4, 6) +
+                "-" +
+                d2[1].slice(6, 8);
+              time = d2[2].slice(0, 2) + ":" + d2[2].slice(2, 4);
+            }
+
+            if (e1) {
+              endDate =
+                e1.slice(0, 4) + "-" + e1.slice(4, 6) + "-" + e1.slice(6, 8);
+            } else if (e2) {
+              endDate =
+                e2[1].slice(0, 4) +
+                "-" +
+                e2[1].slice(4, 6) +
+                "-" +
+                e2[1].slice(6, 8);
+              endTime = e2[2].slice(0, 2) + ":" + e2[2].slice(2, 4);
+            }
+
+            evs.push({
+              title: s,
+              date,
+              time: time,
+              endDate: endDate || date,
+              endTime: endTime,
+            });
+          }
+          state.calEvents = state.calEvents.concat(evs);
+          saveAppState();
+        });
+
+      /* ======================== JOURNAL ======================== */
+      const jDate = document.getElementById("jDate");
+      const jText = document.getElementById("jText");
+      const jView = document.getElementById("jView");
+      jDate.value = todayISO();
+      function renderJ() {
+        jView.innerHTML = renderMarkdown(jText.value);
+      }
+      document.getElementById("jSave").onclick = () => {
+        const d = jDate.value || todayISO();
+        state.journal[d] = jText.value || "";
+        saveAppState();
+      };
+      jText.addEventListener("input", debounce(renderJ, 200));
+      jDate.addEventListener("change", () => {
+        jText.value = state.journal[jDate.value] || "";
+        renderJ();
+      });
+
+      /* ======================== SPEECH (disabled) ======================== */
+      const speechState = document.getElementById("speechState");
+      speechState.textContent = "disabled (desktop)";
+      document.getElementById("btnStartRec").onclick = () => {
+        alert("Dictation is not implemented in this desktop build.");
+      };
+      document.getElementById("btnStopRec").onclick = () => {};
+
+      /* ======================== BACKUP / RESTORE ======================== */
+      function exportState() {
+        const payload = {
+          state,
+          folders,
+        };
+        const blob = new Blob([JSON.stringify(payload, null, 2)], {
+          type: "application/json",
+        });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "clarityhub_backup_" + todayISO() + ".json";
+        a.click();
+        URL.revokeObjectURL(a.href);
+      }
+      async function importState(file) {
+        if (
+          !confirm(
+            "Restore state from this file? This overwrites tasks, events, journal, and folders."
+          )
+        )
+          return;
+        try {
+          const text = await file.text();
+          const data = JSON.parse(text);
+          if (data.state && data.state.tasks && data.state.calEvents) {
+            state = data.state;
+            folders = data.folders || [];
+            saveAppState();
+            saveFolders(folders);
+            alert("Import successful.");
+            location.reload();
+          } else throw new Error("Invalid backup structure.");
+        } catch (e) {
+          alert("Import failed: " + e.message);
+        }
+      }
+
+      document.getElementById("btnExportState").onclick = exportState;
+      document.getElementById("btnImportTrigger").onclick = () =>
+        document.getElementById("btnImportState").click();
+      document
+        .getElementById("btnImportState")
+        .addEventListener("change", (e) => {
+          const f = e.target.files?.[0];
+          if (f) importState(f);
+        });
+
+      /* ======================== BOOT ======================== */
+      loadAppState();
+      renderFolderList();
+      renderMatrix();
+      setupMatrixDragAndDrop();
+      paintCalendar();
+      jText.value = state.journal[jDate.value] || "";
+      renderJ();
+      renderAll();
+    </script>
+  </body>
+</html>
