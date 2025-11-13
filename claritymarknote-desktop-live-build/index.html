@@ -1,0 +1,1592 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <title>ClarityMarknote · Markdown Editor</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root {
+        --bg: #0f1113;
+        --panel: #13161a;
+        --ink: #eaeaea;
+        --ink-dim: #a7abb0;
+        --accent: #a7d0b1;
+        --accent2: #c8b39a;
+        --line: rgba(255, 255, 255, 0.14);
+        --card: #13161a;
+        --shadow: 0 4px 18px rgba(0, 0, 0, 0.3);
+        --r-sm: 8px;
+        --r-lg: 16px;
+        --body: "Optima", "Palatino", "Palatino Linotype", "Book Antiqua",
+          "Charter", "Georgia", serif;
+        --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      }
+      [data-theme="light"] {
+        --bg: #f7f5ef;
+        --panel: #ffffff;
+        --card: #ffffff;
+        --ink: #1e2328;
+        --ink-dim: #6b6f73;
+        --accent: #4e6b50;
+        --accent2: #7a5e3e;
+        --line: rgba(0, 0, 0, 0.12);
+        --shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: var(--body);
+        line-height: 1.6;
+        display: flex;
+        flex-direction: column;
+      }
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.8rem 1rem;
+        border-bottom: 1px solid var(--line);
+        background: var(--panel);
+        box-shadow: var(--shadow);
+        gap: 1rem;
+      }
+      .brand {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+      .brand h1 {
+        margin: 0;
+        font-size: 1.05rem;
+        color: var(--accent);
+      }
+      .brand .tagline {
+        margin: 0;
+        font-size: 0.8rem;
+        color: var(--ink-dim);
+      }
+      .header-actions {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      button {
+        font: 0.85rem/1.2 var(--mono);
+        background: var(--bg);
+        color: var(--ink);
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 0.45rem 0.8rem;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+      }
+      button:hover {
+        border-color: var(--accent);
+        background: #181c20;
+        transition: 0.15s;
+      }
+      main {
+        flex: 1 1 auto;
+        display: flex;
+        flex-direction: column;
+        padding: 0.8rem 1rem 1rem;
+        gap: 0.6rem;
+        overflow: hidden;
+      }
+      .toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+        align-items: center;
+        padding: 0.5rem 0.7rem;
+        border-radius: var(--r-lg);
+        background: var(--panel);
+        border: 1px solid var(--line);
+      }
+      .toolbar span.label {
+        font-size: 0.8rem;
+        color: var(--ink-dim);
+      }
+      .path-label {
+        font-size: 0.8rem;
+        color: var(--ink-dim);
+        padding: 0 0.2rem;
+      }
+      .layout {
+        flex: 1 1 auto;
+        display: grid;
+        grid-template-columns: 220px 1fr 1fr;
+        gap: 0.8rem;
+        overflow: hidden;
+        align-items: stretch;
+      }
+      @media (max-width: 1100px) {
+        .layout {
+          grid-template-columns: 1fr 1fr;
+        }
+        .outline-pane {
+          display: none;
+        }
+      }
+      .pane {
+        border-radius: var(--r-lg);
+        border: 1px solid var(--line);
+        background: var(--card);
+        box-shadow: var(--shadow);
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+      }
+      .pane-header {
+        padding: 0.6rem 0.75rem;
+        border-bottom: 1px solid var(--line);
+        font-size: 0.85rem;
+        color: var(--ink-dim);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .pane-header h2 {
+        margin: 0;
+        font-size: 0.9rem;
+        color: var(--accent);
+        font-weight: 500;
+      }
+      .pane-body {
+        padding: 0.6rem 0.8rem;
+        flex: 1 1 auto;
+        overflow: auto;
+        min-height: 0;
+      }
+      /* Outline and Note List styles */
+      .outline-pane ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        font-size: 0.8rem;
+      }
+      .outline-pane li {
+        padding: 3px 6px;
+        border-radius: 6px;
+        cursor: pointer;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        overflow: hidden;
+      }
+      .outline-pane li:hover {
+        background: rgba(255, 255, 255, 0.04);
+      }
+      .note-list-item {
+        padding: 3px 6px;
+        border-radius: 6px;
+        cursor: pointer;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .note-list-item:hover {
+        background: rgba(255, 255, 255, 0.04);
+      }
+      .drag-over-above {
+        box-shadow: inset 0 3px 0 var(--accent);
+      }
+      .drag-over-below {
+        box-shadow: inset 0 -3px 0 var(--accent);
+      }
+      #editor {
+        width: 100%;
+        height: 100%;
+        min-height: 0;
+        resize: none;
+        border: none;
+        outline: none;
+        background: var(--bg);
+        color: var(--ink);
+        font: 0.95rem/1.5 var(--mono);
+        padding: 0.4rem;
+      }
+      #preview {
+        font-size: 0.95rem;
+      }
+      #preview h1,
+      #preview h2,
+      #preview h3,
+      #preview h4,
+      #preview h5,
+      #preview h6 {
+        margin-top: 0.9em;
+        margin-bottom: 0.35em;
+        font-weight: 500;
+      }
+      #preview p {
+        margin: 0.35em 0;
+      }
+      #preview code {
+        font-family: var(--mono);
+        padding: 1px 3px;
+        border-radius: 4px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: rgba(0, 0, 0, 0.3);
+        font-size: 0.9em;
+      }
+      #preview pre {
+        margin: 0.6em 0;
+        padding: 0.5em 0.7em;
+        border-radius: 8px;
+        background: #050608;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        overflow: auto;
+      }
+      #preview pre code {
+        border: none;
+        background: transparent;
+        padding: 0;
+      }
+      #preview blockquote {
+        border-left: 3px solid var(--accent2);
+        margin: 0.5em 0;
+        padding: 0.2em 0.8em;
+        color: var(--ink-dim);
+        font-style: italic;
+      }
+      #preview a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+      #preview a:hover {
+        text-decoration: underline;
+      }
+      #preview ul,
+      #preview ol {
+        margin: 0.3em 0 0.3em 1.2em;
+        padding-left: 0.6em;
+      }
+      #preview hr {
+        border: 0;
+        border-top: 1px solid var(--line);
+        margin: 0.8em 0;
+      }
+      #preview .wikilink {
+        cursor: pointer;
+        border-bottom: 1px dashed var(--accent);
+      }
+      #preview .wikilink em {
+        font-style: normal;
+        color: var(--accent);
+      }
+      .muted {
+        color: var(--ink-dim);
+        font-size: 0.8rem;
+      }
+      #backlinks {
+        margin-top: 0.8rem;
+        border-top: 1px solid var(--line);
+        padding-top: 0.5rem;
+        font-size: 0.8rem;
+      }
+      #backlinks h3 {
+        margin: 0 0 0.3rem;
+        font-size: 0.85rem;
+        color: var(--accent2);
+        font-weight: 500;
+      }
+      #backlinks ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+      #backlinks li {
+        margin: 0.15rem 0;
+        cursor: pointer;
+      }
+      #backlinks li span.path {
+        opacity: 0.7;
+        font-size: 0.75rem;
+      }
+      .search-input {
+        padding: 0.45rem 0.8rem;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        background: var(--bg);
+        color: var(--ink);
+        font: 0.85rem/1.2 var(--mono);
+        flex-grow: 1;
+      }
+      .search-input::placeholder {
+        color: var(--ink-dim);
+      }
+      .search-result-item {
+        padding: 6px 0;
+        border-bottom: 1px solid var(--line);
+        cursor: pointer;
+      }
+      .search-result-item:hover {
+        background: rgba(255, 255, 255, 0.02);
+      }
+      .search-result-item .title {
+        font-weight: bold;
+        color: var(--accent);
+      }
+      .search-result-item .snippet {
+        font-size: 0.8rem;
+        color: var(--ink-dim);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      /* In-Note Search Bar CSS */
+      #in-note-search-bar {
+        display: none;
+        background: var(--panel);
+        padding: 0.6rem;
+        border-radius: var(--r-sm);
+        border: 1px solid var(--line);
+        margin-bottom: 0.6rem;
+        gap: 0.5rem;
+        align-items: center;
+      }
+      #in-note-search-bar input {
+        flex-grow: 1;
+        background: var(--bg);
+        border: 1px solid var(--line);
+        color: var(--ink);
+        padding: 0.3rem 0.6rem;
+        border-radius: 4px;
+      }
+      #in-note-search-bar button {
+        font-size: 0.75rem;
+        padding: 0.2rem 0.4rem;
+      }
+
+      footer {
+        border-top: 1px solid var(--line);
+        padding: 0.5rem 1rem 0.8rem;
+        font-size: 0.75rem;
+        color: var(--ink-dim);
+        text-align: right;
+        background: var(--panel);
+      }
+      #saveBanner {
+        position: fixed;
+        bottom: 10px;
+        right: 10px;
+        background: var(--accent2);
+        color: var(--bg);
+        padding: 6px 10px;
+        border-radius: 8px;
+        opacity: 0;
+        transition: opacity 0.3s;
+        z-index: 9999;
+        pointer-events: none;
+      }
+      #errorBanner {
+        position: fixed;
+        bottom: 10px;
+        right: 10px;
+        background: #9a4c4c;
+        color: var(--panel);
+        padding: 6px 10px;
+        border-radius: 8px;
+        opacity: 0;
+        transition: opacity 0.3s;
+        z-index: 9999;
+        pointer-events: none;
+      }
+      @media print {
+        /* Hide chrome */
+        header,
+        .toolbar,
+        footer,
+        .outline-pane,
+        #editor-pane {
+          display: none !important;
+        }
+
+        /* Let the document flow vertically, no flex/grid clipping */
+        html,
+        body {
+          height: auto !important;
+          overflow: visible !important;
+        }
+
+        main,
+        .layout,
+        #preview-pane,
+        #preview-pane-body {
+          display: block !important;
+          height: auto !important;
+          max-height: none !important;
+          overflow: visible !important;
+        }
+
+        /* Clean preview styling for print */
+        #preview-pane {
+          border: none !important;
+          box-shadow: none !important;
+        }
+
+        #preview {
+          padding: 0;
+          margin: 0;
+        }
+
+        /* Optional: backlinks on a new page – keep or delete */
+        #backlinks {
+          page-break-before: always;
+        }
+
+        @page {
+          size: A4;
+          margin: 20mm 18mm 24mm 18mm;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="brand">
+        <h1>ClarityMarknote</h1>
+        <p class="tagline">
+          Markdown notes with live preview, section drag-and-drop, and
+          bidirectional links (per folder).
+        </p>
+      </div>
+      <div class="header-actions">
+        <button id="btnTheme">Theme</button>
+        <span class="muted" id="envBadge">Electron desktop</span>
+      </div>
+    </header>
+    <main>
+      <div class="toolbar">
+        <button id="btnNew">New</button>
+        <button id="btnOpen">Open…</button>
+        <button id="btnSave">Save</button>
+        <button id="btnSaveAs">Save As…</button>
+        <button id="btnExportHtml">Export HTML</button>
+        <button id="btnExportPdf">Export PDF</button>
+        <span class="path-label" id="pathLabel">No file open</span>
+        <span style="flex: 1"></span>
+        <input
+          type="search"
+          id="searchInput"
+          class="search-input"
+          placeholder="Open a note to search this folder…"
+          disabled
+        />
+        <span class="label" id="statusLabel">Words: 0</span>
+      </div>
+      <div class="layout">
+        <div class="pane outline-pane" id="outline-pane">
+          <div class="pane-header">
+            <h2 id="outlineHeaderTitle">Note List</h2>
+          </div>
+          <div class="pane-body">
+            <ul id="outlineList"></ul>
+            <p
+              class="muted"
+              style="margin-top: 0.4rem; font-size: 0.75rem"
+              id="outlineFooterText"
+            >
+              Open a file to scan for other notes in the directory.
+            </p>
+          </div>
+        </div>
+        <div class="pane" id="editor-pane">
+          <div class="pane-header">
+            <h2>Markdown</h2>
+          </div>
+          <div class="pane-body">
+            <div id="in-note-search-bar">
+              <input
+                type="text"
+                id="inNoteSearchInput"
+                placeholder="Find in note (Cmd/Ctrl+F)"
+              />
+              <button id="inNoteSearchPrev">▲</button>
+              <button id="inNoteSearchNext">▼</button>
+              <button id="inNoteSearchClose">✕</button>
+              <span id="inNoteSearchCount" class="muted">0/0</span>
+            </div>
+            <textarea
+              id="editor"
+              spellcheck="false"
+              placeholder="# New note
+Write in Markdown.
+- Headings appear in the outline
+- Drag headings to reorder sections
+- Use **bold**, *italic*, `code`, etc.
+- Link other notes with [[note-name]]
+"
+            ></textarea>
+          </div>
+        </div>
+        <div class="pane" id="preview-pane">
+          <div class="pane-header">
+            <h2 id="previewHeaderTitle">Preview</h2>
+          </div>
+          <div class="pane-body" id="preview-pane-body">
+            <div id="search-results-panel" style="display: none"></div>
+            <div id="preview"></div>
+            <div id="backlinks"></div>
+          </div>
+        </div>
+      </div>
+    </main>
+    <footer>ClarityMarknote v0.1 · Electron local-first · Personal use</footer>
+    <div id="saveBanner">Saved ✓</div>
+    <div id="errorBanner"></div>
+    <script>
+      /* -------- Hard gate: Electron only -------- */
+      if (
+        !(
+          typeof window !== "undefined" &&
+          window.electronAPI &&
+          window.electronAPI.isElectron
+        )
+      ) {
+        alert("ClarityMarknote is an Electron desktop app, not a browser app.");
+      }
+
+      /* -------- Theme Handling (With System Preference) -------- */
+      const THEME_KEY = "claritymarknote_theme";
+      const themeBtn = document.getElementById("btnTheme");
+      function applyTheme(theme) {
+        document.documentElement.setAttribute("data-theme", theme);
+        localStorage.setItem(THEME_KEY, theme);
+      }
+      const savedTheme = localStorage.getItem(THEME_KEY);
+      if (savedTheme) {
+        applyTheme(savedTheme);
+      } else {
+        const isSystemDark = window.matchMedia(
+          "(prefers-color-scheme: dark)"
+        ).matches;
+        applyTheme(isSystemDark ? "dark" : "light");
+      }
+      themeBtn.onclick = () => {
+        const curr =
+          document.documentElement.getAttribute("data-theme") || "dark";
+        applyTheme(curr === "dark" ? "light" : "dark");
+      };
+
+      /* -------- Elements & state -------- */
+      const editor = document.getElementById("editor");
+      const preview = document.getElementById("preview");
+      const backlinksEl = document.getElementById("backlinks");
+      const outlineList = document.getElementById("outlineList");
+      const pathLabel = document.getElementById("pathLabel");
+      const statusLabel = document.getElementById("statusLabel");
+      const saveBanner = document.getElementById("saveBanner");
+      const errorBanner = document.getElementById("errorBanner");
+      const previewPaneBody = document.getElementById("preview-pane-body");
+      const searchInput = document.getElementById("searchInput");
+      const searchResultsPanel = document.getElementById(
+        "search-results-panel"
+      );
+      const previewHeaderTitle = document.getElementById("previewHeaderTitle");
+      const outlineHeaderTitle = document.getElementById("outlineHeaderTitle");
+      const outlineFooterText = document.getElementById("outlineFooterText");
+      const inNoteSearchBar = document.getElementById("in-note-search-bar");
+      const inNoteSearchInput = document.getElementById("inNoteSearchInput");
+      const inNoteSearchPrev = document.getElementById("inNoteSearchPrev");
+      const inNoteSearchNext = document.getElementById("inNoteSearchNext");
+      const inNoteSearchClose = document.getElementById("inNoteSearchClose");
+      const inNoteSearchCount = document.getElementById("inNoteSearchCount");
+      const envBadge = document.getElementById("envBadge");
+      envBadge.textContent = "Electron desktop";
+
+      let currentFilePath = null;
+      let currentFileType = "md";
+      let isDirty = false;
+      let noteGraph = {
+        notes: {},
+        backlinks: {},
+      };
+
+      // In-Note Search State
+      let inNoteMatches = [];
+      let currentMatchIndex = -1;
+
+      // Error notification function
+      function flashError(message) {
+        if (!errorBanner) return;
+        errorBanner.textContent = `Error: ${message}`;
+        errorBanner.style.opacity = "1";
+        setTimeout(() => {
+          errorBanner.style.opacity = "0";
+        }, 4000);
+      }
+
+      function flashSaved() {
+        if (!saveBanner) return;
+        saveBanner.style.opacity = "1";
+        setTimeout(() => {
+          saveBanner.style.opacity = "0";
+        }, 1200);
+      }
+      function updateStatus() {
+        const text = editor.value || "";
+        const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+        statusLabel.textContent =
+          (isDirty ? "• " : "") + "Words: " + String(words);
+      }
+      function updatePathLabel() {
+        if (currentFilePath) {
+          pathLabel.textContent =
+            currentFilePath + (isDirty ? " • unsaved" : "");
+        } else {
+          pathLabel.textContent =
+            "No file open" + (isDirty ? " • unsaved" : "");
+        }
+      }
+      /* -------- Path helpers (no Node path module) -------- */
+      function basename(p) {
+        if (!p) return "";
+        const idx = Math.max(p.lastIndexOf("/"), p.lastIndexOf("\\"));
+        return idx >= 0 ? p.slice(idx + 1) : p;
+      }
+      function dirname(p) {
+        if (!p) return "";
+        const idx = Math.max(p.lastIndexOf("/"), p.lastIndexOf("\\"));
+        return idx >= 0 ? p.slice(0, idx) : "";
+      }
+      function stem(p) {
+        const b = basename(p);
+        const i = b.lastIndexOf(".");
+        return i >= 0 ? b.slice(0, i) : b;
+      }
+      function getSuggestedFilename() {
+        const content = editor.value;
+        const headingMatch = content.match(/^#\s+(.*)$/m);
+        let title = (headingMatch && headingMatch[1].trim()) || "Untitled Note";
+        title = title
+          .replace(/[\\/:*?"<>|]/g, "")
+          .trim()
+          .substring(0, 50);
+        const defaultName =
+          (currentFilePath && basename(currentFilePath)) || `${title}.md`;
+        return defaultName;
+      }
+
+      /* -------- Markdown rendering (adapted from Hub) -------- */
+      function escapeHTML(s) {
+        return (s || "").replace(
+          /[&<>"']/g,
+          (m) =>
+            ({
+              "&": "&amp;",
+              "<": "&lt;",
+              ">": "&gt;",
+              '"': "&quot;",
+              "'": "&#39;",
+            }[m])
+        );
+      }
+      function renderMarkdown(src) {
+        if (!src) return "";
+        // Code fences
+        src = src.replace(/```([\s\S]*?)```/g, (_, code) => {
+          return "<pre><code>" + escapeHTML(code) + "</code></pre>";
+        });
+        // Inline code
+        src = src.replace(/`([^`]+)`/g, (_, c) => {
+          return "<code>" + escapeHTML(c) + "</code>";
+        });
+        // Headings
+        src = src
+          .replace(/^######\s*(.*)$/gm, "<h6>$1</h6>")
+          .replace(/^#####\s*(.*)$/gm, "<h5>$1</h5>")
+          .replace(/^####\s*(.*)$/gm, "<h4>$1</h4>")
+          .replace(/^###\s*(.*)$/gm, "<h3>$1</h3>")
+          .replace(/^##\s*(.*)$/gm, "<h2>$1</h2>")
+          .replace(/^#\s*(.*)$/gm, "<h1>$1</h1>");
+        // Bold / italic / strike
+        src = src
+          .replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>")
+          .replace(/\*([^*]+)\*/g, "<i>$1</i>")
+          .replace(/~~([^~]+)~~/g, "<s>$1</s>");
+        // Blockquote
+        src = src.replace(/^>\s?(.*)$/gm, "<blockquote>$1</blockquote>");
+        // Horizontal rule
+        src = src.replace(/^---$/gm, "<hr>");
+        // Ordered / unordered lists (simple)
+        src = src
+          .replace(/^(\d+)\.\s+(.*)$/gm, "<ol start='$1'><li>$2</li></ol>")
+          .replace(/^[-*]\s+(.*)$/gm, "<ul><li>$1</li></ul>");
+        // Links [text](url)
+        src = src.replace(
+          /\[([^\]]+)\]\((https?:[^)]+)\)/g,
+          "<a href='$2' target='_blank' rel='noopener'>$1</a>"
+        );
+        // Wiki-style links [[target]]
+        src = src.replace(
+          /\[\[([^\]]+)\]\]/g,
+          "<span class='wikilink' data-target='$1'>[[<em>$1</em>]]</span>"
+        );
+        // Paragraphs (lines not starting with block tags)
+        src = src.replace(
+          /^(?!<(h\d|ul|ol|li|pre|blockquote|hr|p|code|span))(.+)$/gm,
+          "<p>$2</p>"
+        );
+        return src;
+      }
+
+      /* -------- Note List / Outline Logic -------- */
+      function slugify(s) {
+        return (s || "")
+          .toLowerCase()
+          .trim()
+          .replace(/[^\w\s-]/g, "")
+          .replace(/\s+/g, "-")
+          .replace(/-+/g, "-");
+      }
+      function buildOutline(markdown) {
+        const lines = markdown.split(/\r?\n/);
+        const items = [];
+        const seen = new Map();
+        for (let i = 0; i < lines.length; i++) {
+          const m = lines[i].match(/^(#{1,4})\s+(.*)$/);
+          if (!m) continue;
+          const level = m[1].length;
+          const raw = m[2].trim();
+          const base = slugify(raw) || "section";
+          const n = (seen.get(base) || 0) + 1;
+          seen.set(base, n);
+          const id = n > 1 ? base + "-" + n : base;
+          items.push({ idx: i, level, title: raw, id });
+        }
+        return items;
+      }
+
+      async function buildNoteList() {
+        if (!currentFilePath) {
+          outlineHeaderTitle.textContent = "Note List (None Open)";
+          outlineFooterText.textContent = "Open a file to see local notes.";
+          outlineList.innerHTML =
+            '<li class="muted" style="padding: 0 6px;">Open a file to scan for other notes in the directory.</li>';
+          return;
+        }
+
+        if (!window.electronAPI.listFiles) {
+          outlineHeaderTitle.textContent = "Note List";
+          outlineFooterText.textContent = "API required for note list.";
+          outlineList.innerHTML =
+            '<li class="muted" style="padding: 0 6px;">Electron API not available.</li>';
+          return;
+        }
+
+        const dir = dirname(currentFilePath);
+        try {
+          const files = await window.electronAPI.listFiles(dir);
+          const mdFiles = files.filter((f) => /\.md$/i.test(f.name));
+          outlineHeaderTitle.textContent = `Note List (${basename(dir)})`;
+          outlineFooterText.textContent = `${mdFiles.length} markdown notes.`;
+
+          outlineList.innerHTML = "";
+          if (mdFiles.length === 0) {
+            outlineList.innerHTML =
+              '<li class="muted" style="padding: 0 6px;">No markdown notes in this folder.</li>';
+            return;
+          }
+
+          mdFiles.forEach((f) => {
+            const full = f.fullPath || f.name;
+            const li = document.createElement("li");
+            li.className = "note-list-item";
+            li.textContent = stem(f.name);
+            li.title = full;
+            if (full === currentFilePath) {
+              li.style.fontWeight = "bold";
+              li.style.color = "var(--accent)";
+            }
+            li.onclick = () => {
+              openNoteAtPath(full);
+            };
+            outlineList.appendChild(li);
+          });
+        } catch (e) {
+          flashError("Could not build note list.");
+          outlineList.innerHTML =
+            '<li class="muted" style="padding: 0 6px;">Failed to load notes.</li>';
+        }
+      }
+
+      function paintOutline() {
+        if (!currentFilePath) {
+          buildNoteList();
+          return;
+        }
+
+        const items = buildOutline(editor.value);
+        outlineHeaderTitle.textContent = "Outline";
+        outlineFooterText.textContent = "Drag headings to reorder sections.";
+
+        outlineList.innerHTML = "";
+        if (items.length === 0) {
+          outlineList.innerHTML =
+            '<li class="muted" style="padding: 0 6px;">No headings found.</li>';
+          return;
+        }
+
+        items.forEach((it) => {
+          const li = document.createElement("li");
+          li.draggable = true;
+          li.dataset.idx = String(it.idx);
+          li.textContent =
+            (it.level === 1 ? "" : "".padEnd((it.level - 1) * 2, " ")) +
+            it.title;
+          li.style.paddingLeft = (it.level - 1) * 12 + "px";
+          // Outline click logic (Fix for Preview scroll issue #2)
+          li.addEventListener("click", () => {
+            // 1. Scroll Preview
+            const headings = preview.querySelectorAll(`h1, h2, h3, h4, h5, h6`);
+            let targetHeading = null;
+
+            for (const h of headings) {
+              if (h.textContent.trim() === it.title) {
+                targetHeading = h;
+                break;
+              }
+            }
+
+            if (targetHeading) {
+              const previewRect = previewPaneBody.getBoundingClientRect();
+              const headingRect = targetHeading.getBoundingClientRect();
+
+              previewPaneBody.scrollTop +=
+                headingRect.top - previewRect.top - 10;
+            }
+
+            // 2. Scroll Editor and focus
+            const lines = editor.value.split("\n");
+            for (let i = 0; i < lines.length; i++) {
+              const m = lines[i].match(
+                new RegExp(
+                  `^#{${it.level}}\\s+${it.title.replace(
+                    /[.*+?^${}()|[\]\\]/g,
+                    "\\$&"
+                  )}$`
+                )
+              );
+              if (m) {
+                const scrollRatio = i / lines.length;
+                editor.scrollTop =
+                  (editor.scrollHeight - editor.clientHeight) * scrollRatio;
+                editor.focus();
+                break;
+              }
+            }
+          });
+          li.addEventListener("dragstart", (e) => {
+            e.dataTransfer.setData("text/plain", JSON.stringify(it));
+            li.classList.add("dragging");
+          });
+          li.addEventListener("dragend", () => li.classList.remove("dragging"));
+          li.addEventListener("dragover", (e) => {
+            e.preventDefault();
+            const r = li.getBoundingClientRect();
+            const mid = r.top + r.height / 2;
+            li.classList.toggle("drag-over-above", e.clientY < mid);
+            li.classList.toggle("drag-over-below", e.clientY >= mid);
+          });
+          li.addEventListener("dragleave", () => {
+            li.classList.remove("drag-over-above", "drag-over-below");
+          });
+          li.addEventListener("drop", (e) => {
+            e.preventDefault();
+            const where = li.classList.contains("drag-over-below")
+              ? "below"
+              : "above";
+            li.classList.remove("drag-over-above", "drag-over-below");
+            try {
+              const src = JSON.parse(e.dataTransfer.getData("text/plain"));
+              reorderSection(src.idx, it.idx, where);
+            } catch {}
+          });
+          outlineList.appendChild(li);
+        });
+      }
+
+      function reorderSection(fromLineIdx, toLineIdx, where) {
+        const lines = editor.value.split(/\r?\n/);
+        const startMatch = lines[fromLineIdx]?.match(/^(#{1,4})\s+/);
+        if (!startMatch) return;
+        const fromLevel = startMatch[1].length;
+        let end = lines.length;
+        for (let i = fromLineIdx + 1; i < lines.length; i++) {
+          const m = lines[i].match(/^(#{1,4})\s+/);
+          if (m && m[1].length <= fromLevel) {
+            end = i;
+            break;
+          }
+        }
+        const block = lines.slice(fromLineIdx, end);
+        const restA = lines.slice(0, fromLineIdx);
+        const restB = lines.slice(end);
+        const without = restA.concat(restB);
+        let targetIdx = toLineIdx;
+        if (fromLineIdx < toLineIdx) targetIdx -= end - fromLineIdx;
+        if (where === "below") {
+          let tEnd = without.length;
+          const tStartMatch = without[targetIdx]?.match?.(/^(#{1,4})\s+/);
+          const tLevel = tStartMatch ? tStartMatch[1].length : 1;
+          for (let i = targetIdx + 1; i < without.length; i++) {
+            const m = without[i].match(/^(#{1,4})\s+/);
+            if (m && m[1].length <= tLevel) {
+              tEnd = i;
+              break;
+            }
+          }
+          editor.value = without
+            .slice(0, tEnd)
+            .concat(block, without.slice(tEnd))
+            .join("\n");
+        } else {
+          editor.value = without
+            .slice(0, targetIdx)
+            .concat(block, without.slice(targetIdx))
+            .join("\n");
+        }
+        isDirty = true;
+        updatePathLabel();
+        renderAll();
+      }
+      function renderAll() {
+        preview.innerHTML = renderMarkdown(editor.value);
+        paintOutline();
+        wireWikiLinkClicks();
+        updateStatus();
+        updateBacklinksForCurrentNote();
+      }
+      editor.addEventListener("input", () => {
+        isDirty = true;
+        updatePathLabel();
+        renderAll();
+      });
+      editor.addEventListener("scroll", () => {
+        const editorHeight = editor.scrollHeight - editor.clientHeight;
+        const scrollRatio =
+          editorHeight > 0 ? editor.scrollTop / editorHeight : 0;
+        const previewHeight =
+          previewPaneBody.scrollHeight - previewPaneBody.clientHeight;
+        previewPaneBody.scrollTop = previewHeight * scrollRatio;
+      });
+
+      /* -------- Formatting and Hotkeys -------- */
+      function wrapSelection(openTag, closeTag) {
+        const start = editor.selectionStart;
+        const end = editor.selectionEnd;
+        const selectedText = editor.value.substring(start, end);
+        const before = editor.value.substring(0, start);
+        const after = editor.value.substring(end);
+
+        editor.value = before + openTag + selectedText + closeTag + after;
+
+        editor.selectionStart = start + openTag.length;
+        editor.selectionEnd = end + openTag.length;
+
+        isDirty = true;
+        updatePathLabel();
+        renderAll();
+      }
+
+      // Cmd/Ctrl+F, Cmd/Ctrl+S, B, I, H
+      window.addEventListener("keydown", (e) => {
+        const mac = navigator.platform.toLowerCase().includes("mac");
+        const mod = mac ? e.metaKey : e.ctrlKey;
+
+        if (mod) {
+          switch (e.key.toLowerCase()) {
+            case "f":
+              e.preventDefault();
+              inNoteSearchBar.style.display = "flex";
+              inNoteSearchInput.focus();
+              return;
+            case "s":
+              e.preventDefault();
+              saveFile(false);
+              return;
+            case "b":
+              e.preventDefault();
+              wrapSelection("**", "**");
+              return;
+            case "i":
+              e.preventDefault();
+              wrapSelection("*", "*");
+              return;
+            case "h":
+              e.preventDefault();
+              const cursorPos = editor.selectionStart;
+              const lines = editor.value.split("\n");
+              let currentLineIndex = 0;
+              let charsBeforeLine = 0;
+
+              for (let i = 0; i < lines.length; i++) {
+                const lineLengthWithNL = lines[i].length + 1;
+                if (
+                  cursorPos >= charsBeforeLine &&
+                  cursorPos <= charsBeforeLine + lineLengthWithNL
+                ) {
+                  currentLineIndex = i;
+                  break;
+                }
+                charsBeforeLine += lineLengthWithNL;
+              }
+
+              let currentLine = lines[currentLineIndex];
+              let cursorOffset = 0;
+
+              if (currentLine.startsWith("# ")) {
+                lines[currentLineIndex] = currentLine.substring(2);
+                cursorOffset = -2;
+              } else {
+                lines[currentLineIndex] = "# " + currentLine;
+                cursorOffset = 2;
+              }
+
+              editor.value = lines.join("\n");
+
+              const newCursorPos = Math.min(
+                cursorPos + cursorOffset,
+                charsBeforeLine + lines[currentLineIndex].length
+              );
+              editor.setSelectionRange(newCursorPos, newCursorPos);
+              editor.focus();
+
+              isDirty = true;
+              updatePathLabel();
+              renderAll();
+              return;
+          }
+        }
+      });
+
+      /* -------- In-Note Search Logic (FIXED FOCUS/SCROLL) -------- */
+      function escapeRegExp(str) {
+        return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      }
+
+      function findMatches(query) {
+        const text = editor.value;
+        if (!query) return [];
+        const regex = new RegExp(escapeRegExp(query), "gi");
+        let match;
+        const matches = [];
+        while ((match = regex.exec(text)) !== null) {
+          matches.push({
+            start: match.index,
+            end: match.index + match[0].length,
+          });
+        }
+        return matches;
+      }
+
+      // MODIFIED: Centralized function for selection and scrolling, with focus restoration
+      function selectMatchInEditor(match, { focusEditor = true } = {}) {
+        const previouslyFocused = document.activeElement;
+
+        if (focusEditor) {
+          editor.focus();
+        }
+
+        editor.setSelectionRange(match.start, match.end);
+
+        // If we're not supposed to focus the editor, restore previous focus
+        if (
+          !focusEditor &&
+          previouslyFocused &&
+          previouslyFocused !== editor &&
+          typeof previouslyFocused.focus === "function"
+        ) {
+          previouslyFocused.focus();
+        }
+
+        // Center the match using line-based calculation (20px per line approx.)
+        const before = editor.value.substring(0, match.start);
+        const lineCount = before.split("\n").length;
+        editor.scrollTop = lineCount * 20 - editor.clientHeight / 2;
+      }
+
+      function goToMatch(index) {
+        if (inNoteMatches.length === 0) return;
+
+        currentMatchIndex =
+          (index + inNoteMatches.length) % inNoteMatches.length;
+        const match = inNoteMatches[currentMatchIndex];
+
+        // Buttons: scroll + select + focus editor
+        selectMatchInEditor(match, { focusEditor: true });
+
+        inNoteSearchCount.textContent = `${currentMatchIndex + 1}/${
+          inNoteMatches.length
+        }`;
+      }
+
+      function updateInNoteSearch() {
+        const query = inNoteSearchInput.value;
+        inNoteMatches = findMatches(query);
+
+        if (inNoteMatches.length > 0) {
+          currentMatchIndex = 0;
+          const match = inNoteMatches[currentMatchIndex];
+
+          // Type-ahead: highlight + scroll, but keep focus in search input (focusEditor: false)
+          selectMatchInEditor(match, { focusEditor: false });
+
+          inNoteSearchCount.textContent = `${currentMatchIndex + 1}/${
+            inNoteMatches.length
+          }`;
+        } else {
+          currentMatchIndex = -1;
+          inNoteSearchCount.textContent = `0/0`;
+          // Clear selection when no matches found
+          editor.setSelectionRange(
+            editor.selectionStart,
+            editor.selectionStart
+          );
+        }
+      }
+
+      inNoteSearchInput.addEventListener("input", updateInNoteSearch);
+
+      // Button click handlers use goToMatch, which now correctly manages focus
+      inNoteSearchNext.onclick = () => {
+        goToMatch(currentMatchIndex + 1);
+      };
+      inNoteSearchPrev.onclick = () => {
+        goToMatch(currentMatchIndex - 1);
+      };
+
+      inNoteSearchClose.onclick = () => {
+        inNoteSearchBar.style.display = "none";
+        inNoteSearchInput.value = "";
+        inNoteMatches = [];
+        currentMatchIndex = -1;
+        inNoteSearchCount.textContent = `0/0`;
+        // Clear selection range and return focus to the editor
+        editor.setSelectionRange(editor.selectionStart, editor.selectionStart);
+        editor.focus();
+      };
+
+      /* -------- Wiki links and backlinks -------- */
+      function noteIdFromPath(p) {
+        return slugify(stem(p));
+      }
+      function findWikiLinks(content) {
+        const links = [];
+        const re = /\[\[([^\]]+)\]\]/g;
+        let m;
+        while ((m = re.exec(content))) {
+          links.push(m[1]);
+        }
+        return links;
+      }
+      function wireWikiLinkClicks() {
+        const nodes = preview.querySelectorAll(".wikilink");
+        nodes.forEach((node) => {
+          node.onclick = () => {
+            const raw = node.getAttribute("data-target") || "";
+            openLinkedNote(raw);
+          };
+        });
+      }
+      async function openLinkedNote(rawTarget) {
+        if (!currentFilePath) return;
+        const dir = dirname(currentFilePath);
+        const targetId = slugify(rawTarget);
+        const notes = noteGraph.notes;
+        let candidate = null;
+        for (const [path, meta] of Object.entries(notes)) {
+          if (meta.id === targetId) {
+            candidate = path;
+            break;
+          }
+        }
+        if (!candidate && window.electronAPI.listFiles) {
+          try {
+            const files = await window.electronAPI.listFiles(dir);
+            for (const f of files) {
+              if (!/\.md$/i.test(f.name)) continue;
+              const id = slugify(stem(f.fullPath || f.name));
+              if (id === targetId) {
+                candidate = f.fullPath || f.name;
+                break;
+              }
+            }
+          } catch (e) {
+            flashError("Could not list files for linking.");
+          }
+        }
+        if (!candidate) {
+          const shouldCreate = confirm(
+            `Note "[[${rawTarget}]]" not found in this folder. Create it now?`
+          );
+          if (shouldCreate) {
+            const newPath = dir ? `${dir}/${rawTarget}.md` : `${rawTarget}.md`;
+            newNote();
+            editor.value = `# ${rawTarget}\n\n`;
+            currentFilePath = newPath;
+            isDirty = true;
+            updatePathLabel();
+            renderAll();
+            return;
+          }
+          return;
+        }
+        await openNoteAtPath(candidate);
+      }
+      async function rebuildNoteGraph() {
+        noteGraph = { notes: {}, backlinks: {} };
+        if (!currentFilePath) {
+          updateBacklinksForCurrentNote();
+          return;
+        }
+        if (!window.electronAPI.listFiles || !window.electronAPI.readFile) {
+          updateBacklinksForCurrentNote();
+          return;
+        }
+        const dir = dirname(currentFilePath);
+        if (!dir) {
+          updateBacklinksForCurrentNote();
+          return;
+        }
+        try {
+          const files = await window.electronAPI.listFiles(dir);
+          const notes = {};
+          for (const f of files) {
+            if (!/\.md$/i.test(f.name)) continue;
+            const fullPath = f.fullPath || f.name;
+            const content = (await window.electronAPI.readFile(fullPath)) || "";
+            const id = slugify(stem(fullPath));
+            const linksOut = findWikiLinks(content).map((t) => slugify(t));
+            notes[fullPath] = { id, name: stem(fullPath), linksOut };
+          }
+          const backlinks = {};
+          for (const [path, meta] of Object.entries(notes)) {
+            meta.linksOut.forEach((targetId) => {
+              if (!backlinks[targetId]) backlinks[targetId] = [];
+              backlinks[targetId].push({ path, name: meta.name });
+            });
+          }
+          noteGraph = { notes, backlinks };
+          updateBacklinksForCurrentNote();
+          buildNoteList();
+        } catch (e) {
+          console.error("Backlink indexing error", e);
+        }
+      }
+      function updateBacklinksForCurrentNote() {
+        backlinksEl.innerHTML = "";
+        if (!currentFilePath) return;
+        const id = noteIdFromPath(currentFilePath);
+        const incoming = (noteGraph.backlinks[id] || []).filter(
+          (b) => b.path !== currentFilePath
+        );
+        if (!incoming.length) {
+          backlinksEl.innerHTML =
+            "<div class='muted'>No backlinks in this folder.</div>";
+          return;
+        }
+        const title = document.createElement("h3");
+        title.textContent = "Backlinks (" + incoming.length + ")";
+        const ul = document.createElement("ul");
+        incoming.forEach((b) => {
+          const li = document.createElement("li");
+          li.innerHTML =
+            "<strong>" +
+            escapeHTML(b.name) +
+            "</strong><br><span class='path'>" +
+            escapeHTML(b.path) +
+            "</span>";
+          li.onclick = () => {
+            openNoteAtPath(b.path);
+          };
+          ul.appendChild(li);
+        });
+        backlinksEl.appendChild(title);
+        backlinksEl.appendChild(ul);
+      }
+
+      /* -------- Full-Text Folder Search -------- */
+      async function performSearch(query) {
+        if (!query || !query.trim()) {
+          searchResultsPanel.style.display = "none";
+          preview.style.display = "block";
+          backlinksEl.style.display = "block";
+          previewHeaderTitle.textContent = "Preview";
+          if (currentFilePath) {
+            paintOutline();
+          } else {
+            buildNoteList();
+          }
+          return;
+        }
+        if (
+          !currentFilePath ||
+          !window.electronAPI.listFiles ||
+          !window.electronAPI.readFile
+        ) {
+          flashError("Cannot search: Please open a file first.");
+          return;
+        }
+
+        searchResultsPanel.style.display = "block";
+        preview.style.display = "none";
+        backlinksEl.style.display = "none";
+        previewHeaderTitle.textContent = `Search Results for "${query}"`;
+        searchResultsPanel.innerHTML = '<p class="muted">Searching...</p>';
+
+        const searchLower = query.toLowerCase();
+        const dir = dirname(currentFilePath);
+        let files;
+        try {
+          files = await window.electronAPI.listFiles(dir);
+        } catch (e) {
+          flashError("Failed to list files for search.");
+          searchResultsPanel.innerHTML = '<p class="muted">Search failed.</p>';
+          return;
+        }
+
+        const results = [];
+        const markdownCleanupRegex = /^(#+|-+|\*+|\s+)/g;
+
+        for (const f of files) {
+          if (!/\.md$/i.test(f.name)) continue;
+          const fullPath = f.fullPath || f.name;
+          let content;
+          try {
+            content = await window.electronAPI.readFile(fullPath);
+          } catch (e) {
+            continue;
+          }
+
+          const contentLower = content.toLowerCase();
+          if (
+            contentLower.includes(searchLower) ||
+            f.name.toLowerCase().includes(searchLower)
+          ) {
+            const matchIndex = contentLower.indexOf(searchLower);
+            const start = Math.max(0, matchIndex - 50);
+            const end = Math.min(content.length, matchIndex + 100);
+            let snippet = content.substring(start, end).trim();
+
+            if (start > 0) snippet = "..." + snippet;
+            if (end < content.length) snippet = snippet + "...";
+
+            snippet = snippet
+              .replace(/\n/g, " ")
+              .replace(markdownCleanupRegex, "")
+              .trim();
+
+            results.push({
+              path: fullPath,
+              name: stem(fullPath),
+              snippet: snippet,
+            });
+          }
+        }
+
+        searchResultsPanel.innerHTML = "";
+        if (results.length === 0) {
+          searchResultsPanel.innerHTML = `<p class="muted">No results found for "${query}".</p>`;
+        } else {
+          results.forEach((res) => {
+            const div = document.createElement("div");
+            div.className = "search-result-item";
+            div.innerHTML =
+              `<div class="title">${escapeHTML(res.name)}</div>` +
+              `<div class="snippet">${escapeHTML(res.snippet)}</div>`;
+            div.onclick = () => {
+              openNoteAtPath(res.path);
+            };
+            searchResultsPanel.appendChild(div);
+          });
+        }
+      }
+
+      searchInput.addEventListener("input", () => {
+        performSearch(searchInput.value.trim());
+      });
+
+      /* -------- File I/O (Electron-only) -------- */
+      async function openFile() {
+        if (!window.electronAPI.openFile) {
+          flashError("openFile not wired in electronAPI.");
+          return;
+        }
+        const result = await window.electronAPI.openFile();
+        if (!result) return;
+        if (result.cancelled) return;
+        if (!result.success) {
+          flashError("Open failed.");
+          return;
+        }
+        loadOpenedContent(result.content, result.filePath);
+      }
+      function loadOpenedContent(content, filePath) {
+        const lower = String(filePath || "").toLowerCase();
+        currentFilePath = filePath || null;
+        if (lower.endsWith(".html") || lower.endsWith(".htm")) {
+          const bodyMatch = content.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+          const body = bodyMatch ? bodyMatch[1] : content;
+          const tmp = document.createElement("div");
+          tmp.innerHTML = body;
+          editor.value = tmp.innerText.trim();
+          currentFileType = "html";
+        } else {
+          editor.value = content;
+          currentFileType = lower.endsWith(".txt") ? "txt" : "md";
+        }
+        isDirty = false;
+        updatePathLabel();
+        renderAll();
+        rebuildNoteGraph();
+        editor.focus();
+
+        // Enable folder search now that we have a file context
+        searchInput.disabled = false;
+        searchInput.placeholder = "Search current folder...";
+      }
+      async function saveFile(forceNewPath = false) {
+        if (!window.electronAPI.saveFile) {
+          flashError("saveFile not wired in electronAPI.");
+          return;
+        }
+        const text = editor.value;
+        const defaultName = getSuggestedFilename();
+        const filters = [
+          {
+            name: "Markdown / Text / HTML",
+            extensions: ["md", "txt", "html", "htm"],
+          },
+        ];
+        const targetPath =
+          currentFilePath && !forceNewPath ? currentFilePath : null;
+        const result = await window.electronAPI.saveFile(
+          text,
+          defaultName,
+          filters,
+          targetPath
+        );
+        if (!result) return;
+        if (result.cancelled) return;
+        if (!result.success) {
+          flashError("Save failed.");
+          return;
+        }
+        currentFilePath = result.filePath;
+        isDirty = false;
+        updatePathLabel();
+        flashSaved();
+        rebuildNoteGraph();
+      }
+      async function exportHtml() {
+        if (!window.electronAPI.saveFile) {
+          flashError("saveFile not wired in electronAPI.");
+          return;
+        }
+        const title =
+          (currentFilePath && stem(currentFilePath)) || "ClarityMarknote note";
+        const htmlDoc =
+          "<!DOCTYPE html><html><head><meta charset='utf-8'><title>" +
+          escapeHTML(title) +
+          "</title></head><body>" +
+          preview.innerHTML +
+          "</body></html>";
+        const defaultName = title + ".html";
+        const filters = [
+          { name: "HTML Document", extensions: ["html", "htm"] },
+        ];
+        const result = await window.electronAPI.saveFile(
+          htmlDoc,
+          defaultName,
+          filters,
+          null
+        );
+        if (!result) return;
+        if (result.cancelled) return;
+        if (!result.success) {
+          flashError("Export HTML failed.");
+          return;
+        }
+        flashSaved();
+      }
+      async function exportPdf() {
+        if (!window.electronAPI.printToPDF) {
+          flashError(
+            "printToPDF not wired in electronAPI. Wire main process printing, or use HTML export."
+          );
+          return;
+        }
+        const title =
+          (currentFilePath && stem(currentFilePath)) || "ClarityMarknote note";
+        await window.electronAPI.printToPDF({
+          title,
+          html: preview.innerHTML || "",
+        });
+      }
+      async function openNoteAtPath(fullPath) {
+        if (!window.electronAPI.readFile) {
+          flashError("readFile not wired in electronAPI.");
+          return;
+        }
+        if (isDirty && !confirm("Discard unsaved changes and open new note?"))
+          return;
+
+        const content = await window.electronAPI.readFile(fullPath);
+        if (typeof content !== "string") {
+          flashError("Failed to read " + basename(fullPath));
+          return;
+        }
+        loadOpenedContent(content, fullPath);
+        searchInput.value = "";
+        performSearch("");
+      }
+
+      /* -------- New note -------- */
+      function newNote() {
+        if (isDirty && !confirm("Discard unsaved changes?")) return;
+        editor.value = "";
+        currentFilePath = null;
+        currentFileType = "md";
+        isDirty = false;
+        noteGraph = { notes: {}, backlinks: {} };
+        updatePathLabel();
+        renderAll();
+        searchInput.value = "";
+        searchInput.disabled = true;
+        searchInput.placeholder = "Open a note to search this folder…";
+        editor.focus();
+        buildNoteList();
+      }
+
+      /* -------- Buttons & init -------- */
+      document.getElementById("btnNew").onclick = newNote;
+      document.getElementById("btnOpen").onclick = openFile;
+      document.getElementById("btnSave").onclick = () => saveFile(false);
+      document.getElementById("btnSaveAs").onclick = () => saveFile(true);
+      document.getElementById("btnExportHtml").onclick = exportHtml;
+      document.getElementById("btnExportPdf").onclick = exportPdf;
+
+      renderAll();
+      updatePathLabel();
+      updateStatus();
+      buildNoteList();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,63 @@
+{
+  "name": "claritymarknote",
+  "version": "0.1.0",
+  "description": "ClarityMarknote · Local-first Markdown editor with live preview and backlinks.",
+  "author": "mnani87",
+  "license": "MIT",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --mac dmg --universal"
+  },
+  "dependencies": {
+    "electron-store": "^8.0.0"
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^24.0.0"
+  },
+  "build": {
+    "appId": "app.claritysuite.claritymarknote",
+    "productName": "ClarityMarknote",
+    "files": [
+      "main.js",
+      "preload.js",
+      "index.html",
+      "assets/**/*",
+      "package.json"
+    ],
+    "directories": {
+      "output": "dist"
+    },
+    "mac": {
+      "category": "public.app-category.productivity",
+      "identity": null,
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "universal"
+          ]
+        }
+      ]
+    },
+    "dmg": {
+      "backgroundColor": "#0f1113",
+      "title": "ClarityMarknote",
+      "iconSize": 96,
+      "contents": [
+        {
+          "x": 130,
+          "y": 220,
+          "type": "file"
+        },
+        {
+          "x": 410,
+          "y": 220,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ]
+    }
+  }
+}
