@@ -3,7 +3,6 @@
 // -------------------------------------------------------------
 let projects = {};
 let currentProject = null;
-let currentFiles = [];
 let currentFilePath = null;
 let currentFileHash = null;
 let currentAnnotations = { notes: "", highlights: [] };
@@ -20,7 +19,6 @@ const fileListEl = document.getElementById("file-list");
 const previewTitleEl = document.getElementById("preview-title");
 const previewBodyEl = document.getElementById("preview-body");
 
-// Preview Search Elements
 const toggleSearchBtn = document.getElementById("toggle-search-btn");
 const previewSearchBar = document.getElementById("preview-search-bar");
 const previewSearchInput = document.getElementById("preview-search-input");
@@ -29,19 +27,16 @@ const searchNextBtn = document.getElementById("search-next-btn");
 const searchCloseBtn = document.getElementById("search-close-btn");
 const searchCountEl = document.getElementById("search-count");
 
-// Notes & Tags
 const notesBoxEl = document.getElementById("notes-box");
 const tagsContainerEl = document.getElementById("tags-container");
 const tagInputEl = document.getElementById("tag-input");
 
-// Sidebar Search
 const projectSearchEl = document.getElementById("project-search");
 const contentSearchCheckbox = document.getElementById(
   "content-search-checkbox"
 );
 const globalSearchEl = document.getElementById("global-search");
 
-// Buttons
 const addProjectBtn = document.getElementById("add-project-btn");
 const addFileBtn = document.getElementById("add-file-btn");
 const removeFileBtn = document.getElementById("remove-file-btn");
@@ -52,7 +47,6 @@ const exportProjectNotesBtn = document.getElementById(
   "export-project-notes-btn"
 );
 
-// UI Layout
 const newProjectBar = document.getElementById("new-project-bar");
 const newProjectInput = document.getElementById("new-project-input");
 const newProjectCreate = document.getElementById("new-project-create");
@@ -61,7 +55,6 @@ const themeToggleBtn = document.getElementById("theme-toggle-btn");
 const aboutBtn = document.getElementById("about-btn");
 const aboutPanel = document.getElementById("about-panel");
 
-// Meta
 const projectMetaPanel = document.getElementById("project-meta-panel");
 const projectMetaNameEl = document.getElementById("project-meta-name");
 const projectDescriptionEl = document.getElementById("project-description");
@@ -69,13 +62,11 @@ const renameProjectBtn = document.getElementById("rename-project-btn");
 const metaCreatedEl = document.getElementById("meta-created");
 const metaUpdatedEl = document.getElementById("meta-updated");
 
-// Modal
 const renameModal = document.getElementById("rename-modal");
 const renameInput = document.getElementById("rename-input");
 const renameConfirmBtn = document.getElementById("rename-confirm-btn");
 const renameCancelBtn = document.getElementById("rename-cancel-btn");
 
-// Resizers
 const sidebarResizer = document.getElementById("resizer-sidebar");
 const panelResizer = document.getElementById("resizer-panel");
 const notesResizer = document.getElementById("resizer-notes");
@@ -84,7 +75,7 @@ const filesPanelEl = document.getElementById("files-panel");
 const metaViewPaneEl = document.getElementById("meta-view-pane");
 
 // -------------------------------------------------------------
-// INIT & GLOBAL LISTENERS
+// INIT & MENU LISTENERS
 // -------------------------------------------------------------
 (async function init() {
   const savedTheme = localStorage.getItem("clarityExplorerTheme") || "dark";
@@ -97,6 +88,12 @@ const metaViewPaneEl = document.getElementById("meta-view-pane");
   if (!projects) projects = {};
   renderProjects();
 })();
+
+// Listen for Menu Commands (triggered by Main Process shortcuts)
+window.api.onCmdNewProject(() => toggleNewProjectBar());
+window.api.onCmdAddFiles(() => onAddFiles());
+window.api.onCmdExportFile(() => onExportFileNotes());
+window.api.onCmdExportProject(() => onExportProjectNotes());
 
 function applyTheme(t) {
   document.documentElement.setAttribute("data-theme", t);
@@ -114,16 +111,72 @@ if (aboutBtn && aboutPanel)
   aboutBtn.onclick = () => aboutPanel.classList.toggle("hidden");
 
 // -------------------------------------------------------------
-// RESIZERS LOGIC
+// KEYBOARD SHORTCUTS (Context Specific)
+// -------------------------------------------------------------
+document.addEventListener("keydown", (e) => {
+  const meta = e.metaKey || e.ctrlKey;
+
+  // Cmd+F: Smart Search Focus
+  if (meta && !e.shiftKey && e.key.toLowerCase() === "f") {
+    const isPdf =
+      currentFilePath && currentFilePath.toLowerCase().endsWith(".pdf");
+
+    // Priority 1: If PDF, let native browser find work (do nothing)
+    if (isPdf) return;
+
+    // Priority 2: If File is open, focus Preview Search
+    if (currentFilePath && !toggleSearchBtn.classList.contains("hidden")) {
+      e.preventDefault();
+      if (previewSearchBar.classList.contains("hidden"))
+        toggleSearchBtn.click();
+      previewSearchInput.focus();
+      previewSearchInput.select();
+      return;
+    }
+
+    // Priority 3: Focus Sidebar Search
+    e.preventDefault();
+    if (projectSearchEl) {
+      projectSearchEl.focus();
+      projectSearchEl.select();
+    }
+  }
+  // Cmd+Shift+F: Global Search
+  else if (meta && e.shiftKey && e.key.toLowerCase() === "f") {
+    e.preventDefault();
+    if (globalSearchEl) {
+      globalSearchEl.focus();
+      globalSearchEl.select();
+    }
+  }
+  // Enter: Open File (if sidebar is focused or generic context)
+  else if (e.key === "Enter" && !meta && !e.shiftKey) {
+    const active = document.activeElement;
+    // Only trigger if not typing in an input/textarea
+    if (
+      active === document.body ||
+      active.tagName === "UL" ||
+      active.tagName === "LI"
+    ) {
+      if (currentFilePath) {
+        e.preventDefault();
+        openExternally(currentFilePath);
+      }
+    }
+  }
+});
+
+// -------------------------------------------------------------
+// RESIZERS LOGIC (Constrained)
 // -------------------------------------------------------------
 if (sidebarResizer && sidebarEl)
-  makeResizable(sidebarResizer, sidebarEl, "width", true);
+  makeResizable(sidebarResizer, sidebarEl, "width", true, 200, 500);
 if (panelResizer && filesPanelEl)
-  makeResizable(panelResizer, filesPanelEl, "width", true);
+  makeResizable(panelResizer, filesPanelEl, "width", true, 200, 600);
 if (notesResizer && metaViewPaneEl)
-  makeResizable(notesResizer, metaViewPaneEl, "height", false);
+  makeResizable(notesResizer, metaViewPaneEl, "height", false, 100, 600);
 
-function makeResizable(resizer, target, dimension, isForward) {
+function makeResizable(resizer, target, dimension, isForward, min, max) {
   resizer.addEventListener("mousedown", (e) => {
     e.preventDefault();
     document.body.classList.add(
@@ -137,22 +190,8 @@ function makeResizable(resizer, target, dimension, isForward) {
     const doDrag = (ev) => {
       const currentCoord = dimension === "width" ? ev.clientX : ev.clientY;
       const delta = currentCoord - startCoord;
-
-      // For Notes pane (bottom), pulling down decreases height, pulling up increases (inverse)
-      // But flex-direction is column, and it's at the bottom.
-      // If we resize the BOTTOM element using a Top-Handle:
-      // Pulling UP (negative delta) should INCREASE height.
-      // Pulling DOWN (positive delta) should DECREASE height.
-
-      let newSize;
-      if (isForward) {
-        // Standard: Sidebar or Files Panel
-        newSize = startSize + delta;
-      } else {
-        // Inverse: Notes Pane (Resizer is above it)
-        newSize = startSize - delta;
-      }
-
+      let newSize = isForward ? startSize + delta : startSize - delta;
+      newSize = Math.max(min, Math.min(max, newSize));
       target.style[dimension] = `${newSize}px`;
     };
 
@@ -170,14 +209,13 @@ function makeResizable(resizer, target, dimension, isForward) {
 }
 
 // -------------------------------------------------------------
-// SIDEBAR SEARCH (DEEP CONTENT & FILE LIST)
+// SIDEBAR SEARCH
 // -------------------------------------------------------------
 if (projectSearchEl) {
   projectSearchEl.oninput = () => {
     if (contentSearchCheckbox && contentSearchCheckbox.checked) return;
     renderFileList(false);
   };
-
   projectSearchEl.onkeydown = async (e) => {
     if (
       e.key === "Enter" &&
@@ -223,17 +261,7 @@ async function performContentSearch() {
     const base = window.api.path.basename(match.file_path);
     const li = document.createElement("li");
     li.className = "search-result-item";
-
-    const title = document.createElement("div");
-    title.textContent = base;
-    title.style.fontWeight = "bold";
-
-    const snippet = document.createElement("div");
-    snippet.className = "search-snippet";
-    snippet.textContent = match.snippet;
-
-    li.appendChild(title);
-    li.appendChild(snippet);
+    li.innerHTML = `<div style="font-weight:bold">${base}</div><div class="search-snippet">${match.snippet}</div>`;
 
     li.onclick = () => {
       [...fileListEl.children].forEach((c) => c.classList.remove("selected"));
@@ -244,6 +272,7 @@ async function performContentSearch() {
         tags: [],
       });
 
+      // Auto-trigger preview search for the same term
       setTimeout(() => {
         if (toggleSearchBtn && !toggleSearchBtn.classList.contains("hidden")) {
           if (previewSearchBar && previewSearchBar.classList.contains("hidden"))
@@ -350,7 +379,6 @@ function renderFileList(globalMode = false) {
     const tags = (f.tags || []).join(" ");
     const matchStr = (base + " " + tags).toLowerCase();
     const query = globalMode ? gf : pf;
-
     if (!query || matchStr.includes(query)) {
       const item = { ...f, project: f.project || currentProject };
       currentFiles.push(item);
@@ -409,6 +437,9 @@ async function loadFile(f) {
     }
   }
 
+  // Reset styles
+  previewBodyEl.className = "";
+
   if (["txt", "md"].includes(ext)) return previewText();
   if (["html", "htm"].includes(ext)) return previewHTML();
   if (["png", "jpg", "jpeg", "gif"].includes(ext)) return previewImage();
@@ -419,7 +450,7 @@ async function loadFile(f) {
 }
 
 // -------------------------------------------------------------
-// PREVIEW SEARCH LOGIC (Safe Listeners)
+// PREVIEW SEARCH LOGIC (Safe & Fixed Regex)
 // -------------------------------------------------------------
 window.api.onFoundResult((result) => {
   if (currentFilePath && currentFilePath.toLowerCase().endsWith(".pdf")) {
@@ -455,8 +486,7 @@ if (toggleSearchBtn && previewSearchBar && previewSearchInput) {
 }
 
 function closePreviewSearch() {
-  if (!previewSearchBar) return;
-  previewSearchBar.classList.add("hidden");
+  if (previewSearchBar) previewSearchBar.classList.add("hidden");
   if (previewSearchInput) previewSearchInput.value = "";
   if (searchCountEl) searchCountEl.textContent = "0/0";
   clearHighlights();
@@ -519,9 +549,13 @@ function performDomSearch(term) {
   while ((node = walker.nextNode())) textNodes.push(node);
 
   const regex = new RegExp(`(${escapeRegExp(term)})`, "gi");
+
   textNodes.forEach((textNode) => {
     const text = textNode.nodeValue;
+    regex.lastIndex = 0; // FIX: Reset regex state for each node
+
     if (regex.test(text)) {
+      regex.lastIndex = 0; // Reset again before replace
       const fragment = document.createDocumentFragment();
       let lastIdx = 0;
       text.replace(regex, (match, p1, offset) => {
@@ -566,7 +600,7 @@ function escapeRegExp(string) {
 }
 
 // -------------------------------------------------------------
-// UTILS / MISSING FILE
+// UTILS
 // -------------------------------------------------------------
 function showMissingFileUI(projectName, filePath) {
   const base = window.api.path.basename(filePath);
@@ -615,6 +649,7 @@ function previewPDF() {
 }
 async function previewDocx() {
   const res = await window.api.readDocx(currentFilePath);
+  previewBodyEl.classList.add("mammoth-doc");
   previewBodyEl.innerHTML = res.ok ? res.html : "Error";
 }
 

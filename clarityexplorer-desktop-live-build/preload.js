@@ -38,6 +38,16 @@ contextBridge.exposeInMainWorld("api", {
       callback(result)
     ),
 
+  // --- NEW: Menu Command Listeners (Required for Shortcuts) ---
+  onCmdNewProject: (callback) =>
+    ipcRenderer.on("cmd:new-project", () => callback()),
+  onCmdAddFiles: (callback) =>
+    ipcRenderer.on("cmd:add-files", () => callback()),
+  onCmdExportFile: (callback) =>
+    ipcRenderer.on("cmd:export-file", () => callback()),
+  onCmdExportProject: (callback) =>
+    ipcRenderer.on("cmd:export-project", () => callback()),
+
   // Utilities
   path: {
     basename: (p) => path.basename(p),
