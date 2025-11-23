@@ -12,10 +12,11 @@ if (!fs.existsSync(annotationsDir))
 
 // -------- Helpers --------
 
+// IMPORTANT: we now hash the FILE PATH, not contents.
+// So editing the file doesn't break the notes mapping.
 function getHash(filePath) {
   try {
-    const buff = fs.readFileSync(filePath);
-    return crypto.createHash("sha256").update(buff).digest("hex");
+    return crypto.createHash("sha256").update(filePath, "utf8").digest("hex");
   } catch {
     return null;
   }
@@ -128,7 +129,7 @@ ipcMain.handle("export:file-notes", async (_e, filePath) => {
 
   // find tags for this file
   let tags = [];
-  for (const [projName, files] of Object.entries(projects)) {
+  for (const [, files] of Object.entries(projects)) {
     for (const f of files) {
       if (f.file_path === filePath) {
         tags = f.tags || [];

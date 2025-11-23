@@ -30,6 +30,7 @@ const addProjectBtn = document.getElementById("add-project-btn");
 const addFileBtn = document.getElementById("add-file-btn");
 const removeFileBtn = document.getElementById("remove-file-btn");
 const deleteProjectBtn = document.getElementById("delete-project-btn");
+const openFileBtn = document.getElementById("open-file-btn");
 
 const exportFileNotesBtn = document.getElementById("export-file-notes-btn");
 const exportProjectNotesBtn = document.getElementById(
@@ -41,14 +42,35 @@ const newProjectInput = document.getElementById("new-project-input");
 const newProjectCreate = document.getElementById("new-project-create");
 const newProjectCancel = document.getElementById("new-project-cancel");
 
+const themeToggleBtn = document.getElementById("theme-toggle-btn");
+
+// -------------------------------------------------------------
+// THEME
+// -------------------------------------------------------------
+function applyTheme(theme) {
+  const t = theme === "light" ? "light" : "dark";
+  document.documentElement.setAttribute("data-theme", t);
+  themeToggleBtn.textContent = t === "dark" ? "☾" : "☀";
+  localStorage.setItem("clarityExplorerTheme", t);
+}
+
 // -------------------------------------------------------------
 // INIT
 // -------------------------------------------------------------
 (async function init() {
+  // Theme init
+  const savedTheme = localStorage.getItem("clarityExplorerTheme");
+  applyTheme(savedTheme || "dark");
+
   projects = await ipcRenderer.invoke("projects:load");
   if (!projects) projects = {};
   renderProjects();
 })();
+
+themeToggleBtn.onclick = () => {
+  const current = document.documentElement.getAttribute("data-theme") || "dark";
+  applyTheme(current === "dark" ? "light" : "dark");
+};
 
 projectSearchEl.oninput = () => renderFileList(false);
 globalSearchEl.oninput = () => renderFileList(true);
@@ -57,6 +79,13 @@ addProjectBtn.onclick = () => toggleNewProjectBar();
 addFileBtn.onclick = () => onAddFiles();
 removeFileBtn.onclick = () => onRemoveFile();
 deleteProjectBtn.onclick = () => onDeleteProject();
+openFileBtn.onclick = () => {
+  if (!currentFilePath) {
+    alert("Select a file to open.");
+    return;
+  }
+  openExternally(currentFilePath);
+};
 
 exportFileNotesBtn.onclick = () => onExportFileNotes();
 exportProjectNotesBtn.onclick = () => onExportProjectNotes();
@@ -280,6 +309,10 @@ function renderFileList(globalMode = false) {
       loadFile(f);
     };
 
+    li.ondblclick = () => {
+      openExternally(f.file_path);
+    };
+
     fileListEl.appendChild(li);
   });
 }
@@ -390,4 +423,14 @@ function removeTag(t) {
   saveProjects();
   renderFileList(false);
   loadFile(fileObj);
+}
+
+// -------------------------------------------------------------
+// OPEN EXTERNALLY
+// -------------------------------------------------------------
+async function openExternally(filePath) {
+  const res = await ipcRenderer.invoke("file:open-default", filePath);
+  if (!res || !res.ok) {
+    alert("Could not open file. It may have been moved or deleted.");
+  }
 }

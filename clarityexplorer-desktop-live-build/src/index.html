@@ -39,14 +39,17 @@
       <!-- MAIN -->
       <main id="main">
         <div id="top-bar">
-          <input
-            id="project-search"
-            placeholder="Search filenames/tags in project…"
-          />
-          <input
-            id="global-search"
-            placeholder="Search filenames/tags everywhere…"
-          />
+          <div id="search-group">
+            <input
+              id="project-search"
+              placeholder="Search filenames/tags in project…"
+            />
+            <input
+              id="global-search"
+              placeholder="Search filenames/tags everywhere…"
+            />
+          </div>
+          <button id="theme-toggle-btn" title="Toggle light/dark">☾</button>
         </div>
 
         <div id="layout">
@@ -57,6 +60,7 @@
               <div class="panel-buttons">
                 <button id="add-file-btn">Add Files</button>
                 <button id="remove-file-btn">Remove File</button>
+                <button id="open-file-btn">Open in App</button>
               </div>
             </header>
             <ul id="file-list"></ul>

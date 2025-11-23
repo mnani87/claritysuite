@@ -1,6 +1,13 @@
 :root {
+  font-family: "Palatino", "Palatino Linotype", "Optima", "Charter", "Georgia",
+    serif;
+}
+
+/* DARK THEME (Deep Slate) */
+html[data-theme="dark"] {
   --bg: #0f1113;
   --card: #13161a;
+  --sidebar-bg: #0e1012;
   --ink: #e5e7eb;
   --ink-dim: #9ca3af;
   --line: rgba(255, 255, 255, 0.12);
@@ -9,9 +16,21 @@
   --tag-bg: #1f2924;
   --tag-border: #3c4d43;
   --tag-text: #dce7dc;
-  --r: 12px;
-  --shadow: 0 2px 12px rgba(0, 0, 0, 0.45);
-  font-family: "Optima", "Palatino", "Palatino Linotype", "Georgia", serif;
+}
+
+/* LIGHT THEME (Clarity-style) */
+html[data-theme="light"] {
+  --bg: #f7f5ef;
+  --card: #ffffff;
+  --sidebar-bg: #f6f2e8;
+  --ink: #1f2428;
+  --ink-dim: #6f7478;
+  --line: rgba(0, 0, 0, 0.12);
+  --accent: #4e6b50;
+  --accent2: #c8b39a;
+  --tag-bg: #e4efe7;
+  --tag-border: #a5c2b0;
+  --tag-text: #244034;
 }
 
 body {
@@ -32,7 +51,7 @@ body {
 #sidebar {
   width: 260px;
   border-right: 1px solid var(--line);
-  background: #0e1012;
+  background: var(--sidebar-bg);
   display: flex;
   flex-direction: column;
 }
@@ -85,7 +104,7 @@ body {
   padding: 0.5rem;
   gap: 0.3rem;
   border-bottom: 1px solid var(--line);
-  background: #111416;
+  background: rgba(0, 0, 0, 0.05);
 }
 #new-project-bar input {
   flex: 1;
@@ -113,11 +132,11 @@ body {
   border-left: 3px solid transparent;
 }
 #project-list li:hover {
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(0, 0, 0, 0.03);
 }
 #project-list li.active {
   border-left-color: var(--accent);
-  background: rgba(167, 208, 177, 0.1);
+  background: rgba(167, 208, 177, 0.15);
 }
 
 /* Delete project bar */
@@ -135,9 +154,15 @@ body {
   padding: 0.35rem 0.7rem;
   cursor: pointer;
 }
+html[data-theme="light"] #delete-project-btn {
+  background: #fff1f2;
+  color: #7f1d1d;
+  border-color: rgba(248, 113, 113, 0.7);
+}
 #delete-project-btn:hover {
   background: #7f1d1d;
   border-color: rgba(248, 113, 113, 0.9);
+  color: #fee2e2;
 }
 
 /* MAIN ----------------------------------------------------- */
@@ -148,20 +173,37 @@ body {
   flex-direction: column;
 }
 
+/* Top bar with search + theme toggle */
 #top-bar {
   display: flex;
+  align-items: center;
   gap: 0.7rem;
   padding: 0.8rem;
   border-bottom: 1px solid var(--line);
 }
-
-#top-bar input {
+#search-group {
+  flex: 1;
+  display: flex;
+  gap: 0.7rem;
+}
+#search-group input {
   flex: 1;
   border-radius: 999px;
   padding: 0.4rem 0.8rem;
   border: 1px solid var(--line);
   background: var(--card);
   color: var(--ink);
+}
+
+/* Theme toggle button */
+#theme-toggle-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: var(--card);
+  cursor: pointer;
+  font-size: 0.9rem;
 }
 
 /* LAYOUT --------------------------------------------------- */
@@ -179,10 +221,10 @@ body {
 .panel {
   background: var(--card);
   border: 1px solid var(--line);
-  border-radius: var(--r);
+  border-radius: 12px;
   display: flex;
   flex-direction: column;
-  box-shadow: var(--shadow);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.45);
 }
 
 .panel-header {
@@ -200,7 +242,8 @@ body {
 
 /* Buttons */
 button {
-  font-family: "Optima", "Palatino", "Palatino Linotype", "Georgia", serif;
+  font-family: "Palatino", "Palatino Linotype", "Optima", "Charter", "Georgia",
+    serif;
   font-size: 0.8rem;
   background: #191d21;
   color: var(--ink);
@@ -209,13 +252,19 @@ button {
   padding: 0.25rem 0.7rem;
   cursor: pointer;
 }
+html[data-theme="light"] button {
+  background: #f5f0e6;
+}
 button:hover {
   border-color: var(--accent);
   background: #20252a;
 }
+html[data-theme="light"] button:hover {
+  background: #ece3d2;
+}
 
 #files-panel {
-  width: 340px;
+  width: 360px;
   overflow: hidden;
 }
 
@@ -231,8 +280,11 @@ button:hover {
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   cursor: pointer;
 }
+html[data-theme="light"] #file-list li {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+}
 #file-list li.selected {
-  background: rgba(167, 208, 177, 0.12);
+  background: rgba(167, 208, 177, 0.18);
 }
 
 /* PREVIEW -------------------------------------------------- */
@@ -266,9 +318,12 @@ button:hover {
   background: #0f1214;
   color: var(--ink);
   border: 1px solid var(--line);
-  border-radius: var(--r);
+  border-radius: 12px;
   padding: 0.7rem;
   margin-top: 0.4rem;
+}
+html[data-theme="light"] #notes-box {
+  background: #fdfaf4;
 }
 
 /* Tags */
