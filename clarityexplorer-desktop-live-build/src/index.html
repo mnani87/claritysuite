@@ -2,41 +2,59 @@
 <html lang="en" data-theme="dark">
   <head>
     <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="script-src 'self' 'unsafe-inline';"
+    />
     <title>Clarity Explorer</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <div id="shell">
-      <!-- SIDEBAR -->
       <aside id="sidebar">
         <div id="sidebar-top">
           <div id="brand">
             <div id="brand-icon"></div>
             <div>
               <div id="brand-title">Clarity Explorer</div>
-              <div id="brand-sub">Project views over your real files</div>
+              <div id="brand-sub">Local-First Workspace</div>
             </div>
           </div>
-          <button id="add-project-btn">＋</button>
+          <button id="add-project-btn" title="New Project">＋</button>
         </div>
 
-        <!-- inline project creation -->
         <div id="new-project-bar" class="hidden">
           <input id="new-project-input" placeholder="New project name…" />
           <button id="new-project-create">Create</button>
           <button id="new-project-cancel">✕</button>
         </div>
 
-        <!-- project list -->
         <ul id="project-list"></ul>
 
-        <!-- delete project (never touches disk files) -->
+        <div id="project-meta-panel" class="hidden">
+          <div id="project-meta-inner">
+            <div id="project-meta-header">
+              <span id="project-meta-name"></span>
+              <button id="rename-project-btn" title="Rename Project">✎</button>
+            </div>
+
+            <div id="project-dates">
+              <div id="meta-created"></div>
+              <div id="meta-updated"></div>
+            </div>
+
+            <textarea
+              id="project-description"
+              placeholder="Project description..."
+            ></textarea>
+          </div>
+        </div>
+
         <div id="delete-project-bar">
           <button id="delete-project-btn">Delete Project</button>
         </div>
       </aside>
 
-      <!-- MAIN -->
       <main id="main">
         <div id="top-bar">
           <div id="search-group">
@@ -49,24 +67,131 @@
               placeholder="Search filenames/tags everywhere…"
             />
           </div>
-          <button id="theme-toggle-btn" title="Toggle light/dark">☾</button>
+          <button id="theme-toggle-btn" title="Toggle light/dark">Theme</button>
+          <button id="about-btn" title="About Clarity Explorer">About</button>
+        </div>
+
+        <div id="about-panel" class="hidden">
+          <div id="about-inner">
+            <h2>Clarity Explorer</h2>
+            <p class="subtitle">
+              Local-first project views over your real files.
+            </p>
+
+            <div class="about-section">
+              <h3>What Clarity Explorer Does</h3>
+              <ul>
+                <li>
+                  <strong>Projects over real files:</strong> Group files from
+                  anywhere on disk without moving or copying them.
+                </li>
+                <li>
+                  <strong>Calm previews:</strong> Read text, Markdown, HTML,
+                  PDFs, images, and DOCX files in one quiet interface.
+                </li>
+                <li>
+                  <strong>Per-file notes:</strong> Notes stay linked to a file
+                  by its content hash and remain even as the file changes.
+                </li>
+                <li>
+                  <strong>Tags:</strong> Add simple tags and filter instantly.
+                </li>
+                <li>
+                  <strong>Search:</strong> Search filenames and tags within a
+                  project or across all projects.
+                </li>
+                <li>
+                  <strong>Open in native apps:</strong> Double-click to open the
+                  file in your default macOS application.
+                </li>
+                <li>
+                  <strong>Theme switching:</strong> Switch between Deep Slate
+                  and Light mode. Your preference is remembered.
+                </li>
+                <li>
+                  <strong>Non-destructive:</strong> Removing a file from a
+                  project never touches the file itself.
+                </li>
+              </ul>
+            </div>
+
+            <div class="about-section">
+              <h3>How It Works</h3>
+              <p>
+                Clarity Explorer adds a small <strong>JSON overlay</strong> on
+                top of your filesystem. The files stay exactly where they are.
+              </p>
+              <ul>
+                <li>
+                  <strong>Virtual Projects:</strong> The app stores only
+                  paths—your folders are untouched.
+                </li>
+                <li>
+                  <strong>Hash-based notes:</strong> Notes attach to the file’s
+                  content hash. If renamed or moved, use
+                  <strong>Locate</strong> to re-link.
+                </li>
+                <li>
+                  <strong>No indexing:</strong> The app never scans or analyses
+                  file contents. Search is intentionally simple and predictable.
+                </li>
+                <li>
+                  <strong>Local-only:</strong> Everything is offline. No sync,
+                  accounts, telemetry, or uploads.
+                </li>
+              </ul>
+            </div>
+
+            <div class="about-section">
+              <h3>Keyboard Shortcuts</h3>
+              <table class="shortcuts-table">
+                <tr>
+                  <th><kbd>⌘</kbd> + <kbd>N</kbd></th>
+                  <td>New Project</td>
+                </tr>
+                <tr>
+                  <th><kbd>⌘</kbd> + <kbd>O</kbd></th>
+                  <td>Add Files</td>
+                </tr>
+                <tr>
+                  <th><kbd>⌘</kbd> + <kbd>F</kbd></th>
+                  <td>Project Search</td>
+                </tr>
+                <tr>
+                  <th><kbd>⌘</kbd> + <kbd>Shift</kbd> + <kbd>F</kbd></th>
+                  <td>Global Search</td>
+                </tr>
+                <tr>
+                  <th><kbd>Enter</kbd></th>
+                  <td>Add tag</td>
+                </tr>
+                <tr>
+                  <th>Double-click file</th>
+                  <td>Open in native app</td>
+                </tr>
+              </table>
+            </div>
+
+            <p class="about-footer">
+              ClarityExplorer • A quiet, offline tool for organising and reading
+              your own files.
+            </p>
+          </div>
         </div>
 
         <div id="layout">
-          <!-- LEFT PANEL: FILES -->
           <section id="files-panel" class="panel">
             <header class="panel-header">
               <span>Files</span>
               <div class="panel-buttons">
-                <button id="add-file-btn">Add Files</button>
-                <button id="remove-file-btn">Remove File</button>
-                <button id="open-file-btn">Open in App</button>
+                <button id="add-file-btn">＋ Add Files</button>
+                <button id="remove-file-btn">− Remove</button>
+                <button id="open-file-btn">↗ Open</button>
               </div>
             </header>
             <ul id="file-list"></ul>
           </section>
 
-          <!-- RIGHT PANEL: PREVIEW -->
           <section id="preview-panel" class="panel">
             <header class="panel-header">
               <span id="preview-title"></span>
@@ -81,11 +206,12 @@
             <div id="preview-area">
               <div id="preview-body"></div>
 
-              <!-- Notes -->
               <div id="notes-header">Notes</div>
-              <textarea id="notes-box"></textarea>
+              <textarea
+                id="notes-box"
+                placeholder="Write your notes here (Markdown supported in export)..."
+              ></textarea>
 
-              <!-- Tags -->
               <div id="tags-header">Tags</div>
               <div id="tags-container"></div>
               <input id="tag-input" placeholder="Add tag…" />
@@ -93,6 +219,17 @@
           </section>
         </div>
       </main>
+    </div>
+
+    <div id="rename-modal" class="hidden modal-overlay">
+      <div class="modal-box">
+        <h3>Rename Project</h3>
+        <input id="rename-input" placeholder="New project name..." />
+        <div class="modal-buttons">
+          <button id="rename-cancel-btn">Cancel</button>
+          <button id="rename-confirm-btn" class="primary">Rename</button>
+        </div>
+      </div>
     </div>
 
     <script src="renderer.js"></script>
