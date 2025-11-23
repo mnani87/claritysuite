@@ -80,6 +80,43 @@ textarea {
   display: none !important;
 }
 
+/* RESIZERS */
+.resizer-vertical {
+  width: 5px;
+  cursor: col-resize;
+  background: transparent;
+  z-index: 100;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+.resizer-vertical:hover,
+.resizer-vertical.active {
+  background: var(--accent);
+}
+
+.resizer-horizontal {
+  height: 5px;
+  cursor: row-resize;
+  background: transparent;
+  z-index: 100;
+  transition: background 0.2s;
+  flex-shrink: 0;
+  width: 100%;
+}
+.resizer-horizontal:hover,
+.resizer-horizontal.active {
+  background: var(--accent);
+}
+
+body.resizing {
+  cursor: col-resize;
+  user-select: none;
+} /* Prevent text selection while dragging */
+body.resizing-v {
+  cursor: row-resize;
+  user-select: none;
+}
+
 /* SCROLLBAR */
 ::-webkit-scrollbar {
   width: 12px;
@@ -105,7 +142,8 @@ textarea {
 /* SIDEBAR */
 #sidebar {
   width: 280px;
-  min-width: 240px;
+  min-width: 200px;
+  max-width: 500px; /* Constraints */
   border-right: 1px solid var(--line);
   background: var(--sidebar-bg);
   display: flex;
@@ -325,6 +363,7 @@ textarea {
   flex: 1;
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 #top-bar {
   display: flex;
@@ -472,7 +511,7 @@ textarea {
 #layout {
   flex: 1;
   display: flex;
-  gap: 1rem;
+  gap: 0;
   padding: 1rem;
   overflow: hidden;
   min-height: 0;
@@ -504,7 +543,14 @@ html[data-theme="light"] .panel {
 }
 .panel-buttons {
   display: flex;
-  gap: 0.6rem;
+  gap: 0.5rem; /* Slightly tighter gap */
+  align-items: center;
+}
+
+/* Ensure buttons don't get crushed */
+.panel-buttons button {
+  white-space: nowrap;
+  padding: 0.25rem 0.6rem;
 }
 #add-file-btn,
 #remove-file-btn,
@@ -544,6 +590,7 @@ html[data-theme="light"] .panel {
 
 #files-panel {
   width: 340px;
+  min-width: 200px; /* Constraints */
   display: flex;
   flex-direction: column;
 }
@@ -577,12 +624,13 @@ html[data-theme="light"] .panel {
   padding-left: calc(1rem - 3px);
 }
 
-/* SPLIT VIEW PREVIEW */
+/* PREVIEW PANEL */
 #preview-panel {
   flex: 1;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  min-width: 300px;
 }
 #split-container {
   flex: 1;
@@ -598,7 +646,7 @@ html[data-theme="light"] .panel {
   display: flex;
   flex-direction: column;
   overflow-y: auto;
-  min-height: 0;
+  min-height: 100px;
   background: var(--card);
   position: relative;
 }
@@ -684,8 +732,8 @@ html[data-theme="light"] .panel {
 
 /* Bottom: Meta View */
 #meta-view-pane {
-  height: 40%;
-  min-height: 150px;
+  height: 300px;
+  min-height: 100px; /* Default height */
   border-top: 1px solid var(--line);
   background: var(--bg);
   display: flex;

@@ -53,6 +53,8 @@
         </div>
       </aside>
 
+      <div id="resizer-sidebar" class="resizer-vertical"></div>
+
       <main id="main">
         <div id="top-bar">
           <div id="search-group">
@@ -76,25 +78,122 @@
           <div id="about-inner">
             <h2>Clarity Explorer</h2>
             <p class="subtitle">
-              Local-first project views over your real files.
+              A quiet, local-first workspace for research, reading, and
+              thinking.
             </p>
+
             <div class="about-section">
-              <h3>How It Works</h3>
+              <h3>What is Clarity Explorer?</h3>
+              <p>
+                Clarity Explorer is a <strong>"Virtual Overlay"</strong> for
+                your file system. Unlike traditional file managers that force
+                you to move files into specific folders, Clarity lets you create
+                "Projects" that group files from anywhere on your hard drive
+                (Downloads, Documents, External Drives) without moving or
+                duplicating the originals.
+              </p>
+              <p>
+                It is built on the <strong>Local-First</strong> philosophy: your
+                data never leaves your machine, there is no cloud sync, and no
+                telemetry. You own your notes and your files.
+              </p>
+            </div>
+
+            <div class="about-section">
+              <h3>How to Use</h3>
+              <dl>
+                <dt>1. Create a Project</dt>
+                <dd>
+                  Start by creating a project (e.g., "Thesis Research" or "Legal
+                  Case 101"). This acts as a virtual bucket.
+                </dd>
+
+                <dt>2. Add Files</dt>
+                <dd>
+                  Click <strong>+ Add</strong> to select files. You can mix
+                  PDFs, Word Docs, Images, and Text files in the same project.
+                  The original files stay exactly where they are on your disk.
+                </dd>
+
+                <dt>3. Read & Annotate</dt>
+                <dd>
+                  Select a file to open the <strong>Split View</strong>. Reading
+                  material is on top; your Notes and Tags are on the bottom.
+                  Notes are autosaved and linked to the file's unique "Content
+                  Hash," so they survive even if you rename the file.
+                </dd>
+
+                <dt>4. Deep Search</dt>
+                <dd>
+                  Use the search bar in the top left. Toggle the
+                  <strong>Abc</strong> button and press Enter to search inside
+                  the <em>actual text content</em> of every DOCX, MD, and TXT
+                  file in your project.
+                </dd>
+              </dl>
+            </div>
+
+            <div class="about-section">
+              <h3>Keyboard Shortcuts</h3>
+              <table class="shortcuts-table">
+                <tr>
+                  <th><kbd>⌘</kbd> / <kbd>Ctrl</kbd> + <kbd>N</kbd></th>
+                  <td>Create a new project</td>
+                </tr>
+                <tr>
+                  <th><kbd>⌘</kbd> / <kbd>Ctrl</kbd> + <kbd>O</kbd></th>
+                  <td>Add files to current project</td>
+                </tr>
+                <tr>
+                  <th><kbd>⌘</kbd> / <kbd>Ctrl</kbd> + <kbd>F</kbd></th>
+                  <td>Focus Project Search (Sidebar)</td>
+                </tr>
+                <tr>
+                  <th><kbd>Enter</kbd></th>
+                  <td>Trigger Deep Content Search (if "Abc" is checked)</td>
+                </tr>
+                <tr>
+                  <th><kbd>Double Click</kbd></th>
+                  <td>Open file in default system app</td>
+                </tr>
+                <tr>
+                  <th><kbd>⌘</kbd> / <kbd>Ctrl</kbd> + <kbd>F</kbd></th>
+                  <td>
+                    <strong>Inside PDF:</strong> Opens Native Find bar<br />
+                    <strong>Inside Text/Doc:</strong> Opens Custom Find bar
+                  </td>
+                </tr>
+              </table>
+            </div>
+
+            <div class="about-section">
+              <h3>Limitations & Data Safety</h3>
               <ul>
                 <li>
-                  <strong>Split View:</strong> Document on top, Notes on bottom.
+                  <strong>Moved Files:</strong> If you move a file on your hard
+                  drive, Clarity will lose track of it. Use the
+                  <strong>"Locate"</strong> button in the preview pane to point
+                  to the new location. Your notes will be instantly migrated and
+                  restored.
                 </li>
                 <li>
-                  <strong>Deep Search:</strong> Toggle "Abc" to search inside
-                  text/docx files.
+                  <strong>PDF Search:</strong> Because PDFs are rendered
+                  securely, we cannot highlight text programmatically. Please
+                  click inside the PDF and use the native <kbd>Cmd</kbd>+<kbd
+                    >F</kbd
+                  >
+                  to search within the document.
                 </li>
                 <li>
-                  <strong>PDF Search:</strong> Uses native browser search (Cmd+F
-                  integration).
+                  <strong>Content Search:</strong> Deep search currently
+                  supports <code>.txt</code>, <code>.md</code>,
+                  <code>.html</code>, and <code>.docx</code>. It does not search
+                  inside PDFs or Images (OCR).
                 </li>
               </ul>
             </div>
-            <p class="about-footer">v0.2.0 • Local-First</p>
+
+            <p class="about-footer">Version 0.2.0 • Secure • Offline</p>
           </div>
         </div>
 
@@ -111,6 +210,8 @@
             <ul id="file-list"></ul>
           </section>
 
+          <div id="resizer-panel" class="resizer-vertical"></div>
+
           <section id="preview-panel" class="panel">
             <header class="panel-header">
               <span id="preview-title"></span>
@@ -122,7 +223,19 @@
                 >
                   🔍
                 </button>
-                <button id="export-file-notes-btn">Export Notes</button>
+
+                <button
+                  id="export-file-notes-btn"
+                  title="Export notes for current file"
+                >
+                  Export File
+                </button>
+                <button
+                  id="export-project-notes-btn"
+                  title="Export notes for entire project"
+                >
+                  Export Project
+                </button>
               </div>
             </header>
 
@@ -140,6 +253,8 @@
                 </div>
                 <div id="preview-body"></div>
               </div>
+
+              <div id="resizer-notes" class="resizer-horizontal"></div>
 
               <div id="meta-view-pane">
                 <div id="meta-tabs">

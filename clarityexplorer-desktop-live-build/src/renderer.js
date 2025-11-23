@@ -75,6 +75,14 @@ const renameInput = document.getElementById("rename-input");
 const renameConfirmBtn = document.getElementById("rename-confirm-btn");
 const renameCancelBtn = document.getElementById("rename-cancel-btn");
 
+// Resizers
+const sidebarResizer = document.getElementById("resizer-sidebar");
+const panelResizer = document.getElementById("resizer-panel");
+const notesResizer = document.getElementById("resizer-notes");
+const sidebarEl = document.getElementById("sidebar");
+const filesPanelEl = document.getElementById("files-panel");
+const metaViewPaneEl = document.getElementById("meta-view-pane");
+
 // -------------------------------------------------------------
 // INIT & GLOBAL LISTENERS
 // -------------------------------------------------------------
@@ -104,6 +112,62 @@ if (themeToggleBtn)
 
 if (aboutBtn && aboutPanel)
   aboutBtn.onclick = () => aboutPanel.classList.toggle("hidden");
+
+// -------------------------------------------------------------
+// RESIZERS LOGIC
+// -------------------------------------------------------------
+if (sidebarResizer && sidebarEl)
+  makeResizable(sidebarResizer, sidebarEl, "width", true);
+if (panelResizer && filesPanelEl)
+  makeResizable(panelResizer, filesPanelEl, "width", true);
+if (notesResizer && metaViewPaneEl)
+  makeResizable(notesResizer, metaViewPaneEl, "height", false);
+
+function makeResizable(resizer, target, dimension, isForward) {
+  resizer.addEventListener("mousedown", (e) => {
+    e.preventDefault();
+    document.body.classList.add(
+      dimension === "width" ? "resizing" : "resizing-v"
+    );
+    resizer.classList.add("active");
+
+    const startSize = parseInt(getComputedStyle(target)[dimension], 10);
+    const startCoord = dimension === "width" ? e.clientX : e.clientY;
+
+    const doDrag = (ev) => {
+      const currentCoord = dimension === "width" ? ev.clientX : ev.clientY;
+      const delta = currentCoord - startCoord;
+
+      // For Notes pane (bottom), pulling down decreases height, pulling up increases (inverse)
+      // But flex-direction is column, and it's at the bottom.
+      // If we resize the BOTTOM element using a Top-Handle:
+      // Pulling UP (negative delta) should INCREASE height.
+      // Pulling DOWN (positive delta) should DECREASE height.
+
+      let newSize;
+      if (isForward) {
+        // Standard: Sidebar or Files Panel
+        newSize = startSize + delta;
+      } else {
+        // Inverse: Notes Pane (Resizer is above it)
+        newSize = startSize - delta;
+      }
+
+      target.style[dimension] = `${newSize}px`;
+    };
+
+    const stopDrag = () => {
+      document.body.classList.remove("resizing");
+      document.body.classList.remove("resizing-v");
+      resizer.classList.remove("active");
+      document.removeEventListener("mousemove", doDrag);
+      document.removeEventListener("mouseup", stopDrag);
+    };
+
+    document.addEventListener("mousemove", doDrag);
+    document.addEventListener("mouseup", stopDrag);
+  });
+}
 
 // -------------------------------------------------------------
 // SIDEBAR SEARCH (DEEP CONTENT & FILE LIST)
@@ -391,7 +455,8 @@ if (toggleSearchBtn && previewSearchBar && previewSearchInput) {
 }
 
 function closePreviewSearch() {
-  if (previewSearchBar) previewSearchBar.classList.add("hidden");
+  if (!previewSearchBar) return;
+  previewSearchBar.classList.add("hidden");
   if (previewSearchInput) previewSearchInput.value = "";
   if (searchCountEl) searchCountEl.textContent = "0/0";
   clearHighlights();
