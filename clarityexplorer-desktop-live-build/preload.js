@@ -26,7 +26,19 @@ contextBridge.exposeInMainWorld("api", {
   exportProjectNotes: (projectName) =>
     ipcRenderer.invoke("export:project-notes", projectName),
 
-  // Utilities (Since we can't use 'path' module in renderer)
+  // Search APIs
+  searchProjectContent: (files, query) =>
+    ipcRenderer.invoke("project:search-text", files, query),
+
+  findStart: (text) => ipcRenderer.invoke("find:start", text),
+  findStop: () => ipcRenderer.invoke("find:stop"),
+  findNext: (text, forward) => ipcRenderer.invoke("find:next", text, forward),
+  onFoundResult: (callback) =>
+    ipcRenderer.on("found-in-page-result", (_event, result) =>
+      callback(result)
+    ),
+
+  // Utilities
   path: {
     basename: (p) => path.basename(p),
   },

@@ -23,73 +23,15 @@ function getHash(filePath) {
 
 async function loadProjects() {
   let data = {};
-  let changed = false;
-
   try {
     if (fs.existsSync(projectsFile)) {
       const raw = await fs.promises.readFile(projectsFile, "utf8");
       data = JSON.parse(raw);
     }
   } catch (e) {
-    console.error("Error loading projects.json:", e);
+    console.error("Error loading projects:", e);
     data = {};
   }
-
-  const nowIso = new Date().toISOString();
-
-  // Normalisation Logic
-  Object.entries(data).forEach(([name, value]) => {
-    if (Array.isArray(value)) {
-      data[name] = {
-        meta: {
-          type: "general",
-          description: "",
-          created_at: nowIso,
-          updated_at: nowIso,
-        },
-        files: value,
-      };
-      changed = true;
-    } else if (value && typeof value === "object") {
-      if (!value.meta) {
-        value.meta = {
-          type: "general",
-          description: "",
-          created_at: nowIso,
-          updated_at: nowIso,
-        };
-        changed = true;
-      }
-      if (!Array.isArray(value.files)) {
-        value.files = [];
-        changed = true;
-      }
-    } else {
-      data[name] = {
-        meta: {
-          type: "general",
-          description: "",
-          created_at: nowIso,
-          updated_at: nowIso,
-        },
-        files: [],
-      };
-      changed = true;
-    }
-  });
-
-  if (changed) {
-    try {
-      await fs.promises.writeFile(
-        projectsFile,
-        JSON.stringify(data, null, 2),
-        "utf8"
-      );
-    } catch (e) {
-      console.error("Error normalising projects.json:", e);
-    }
-  }
-
   return data;
 }
 
@@ -131,21 +73,31 @@ async function saveAnnotations(hash, data) {
 
 // -------- Window --------
 
+let mainWindow = null;
+
 function createWindow() {
-  const win = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     width: 1300,
-    height: 800,
+    height: 900,
     title: "Clarity Explorer",
     webPreferences: {
-      sandbox: false, // <--- FIX: Allows preload to use 'path' module
-      nodeIntegration: false, // SECURITY: Keep Node out of Renderer
-      contextIsolation: true, // SECURITY: Protect Window scope
+      sandbox: false,
+      nodeIntegration: false,
+      contextIsolation: true,
       preload: path.join(__dirname, "preload.js"),
+      plugins: true, // Required for PDF Viewer
     },
   });
 
-  // Note: We point to src/index.html
-  win.loadFile(path.join(__dirname, "src", "index.html"));
+  mainWindow.loadFile(path.join(__dirname, "src", "index.html"));
+
+  // Listen for PDF Find results
+  mainWindow.webContents.on("found-in-page", (event, result) => {
+    mainWindow.webContents.send("found-in-page-result", {
+      activeMatchOrdinal: result.activeMatchOrdinal,
+      matches: result.matches,
+    });
+  });
 }
 
 app.whenReady().then(createWindow);
@@ -170,11 +122,8 @@ ipcMain.handle("file:open-default", (_e, filePath) => {
   return { ok: true };
 });
 
-ipcMain.handle("file:exists", (_e, filePath) => {
-  return fs.existsSync(filePath);
-});
+ipcMain.handle("file:exists", (_e, filePath) => fs.existsSync(filePath));
 
-// Async File Reading
 ipcMain.handle("file:read-text", async (_e, filePath) => {
   try {
     const contents = await fs.promises.readFile(filePath, "utf8");
@@ -200,11 +149,9 @@ ipcMain.handle("annot:get-hash", (_e, filePath) => getHash(filePath));
 ipcMain.handle("annot:load", (_e, hash) => loadAnnotations(hash));
 ipcMain.handle("annot:save", (_e, hash, data) => saveAnnotations(hash, data));
 
-// Migration Handler (Fixes data loss on moving files)
 ipcMain.handle("annot:migrate", async (_e, oldPath, newPath) => {
   const oldHash = getHash(oldPath);
   const newHash = getHash(newPath);
-
   const oldFile = path.join(annotationsDir, `${oldHash}.json`);
   const newFile = path.join(annotationsDir, `${newHash}.json`);
 
@@ -219,6 +166,71 @@ ipcMain.handle("annot:migrate", async (_e, oldPath, newPath) => {
   return { ok: true, status: "no-notes-found" };
 });
 
+// Search Handlers (PDF / Native)
+ipcMain.handle("find:start", (_e, text) => {
+  if (mainWindow) mainWindow.webContents.findInPage(text, { findNext: true });
+});
+ipcMain.handle("find:stop", (_e) => {
+  if (mainWindow) mainWindow.webContents.stopFindInPage("clearSelection");
+});
+ipcMain.handle("find:next", (_e, text, forward) => {
+  if (mainWindow)
+    mainWindow.webContents.findInPage(text, { findNext: true, forward });
+});
+
+// Deep Content Search
+ipcMain.handle("project:search-text", async (_e, filePaths, query) => {
+  const results = [];
+  const q = query.toLowerCase();
+  const snippetLength = 60;
+
+  for (const filePath of filePaths) {
+    if (!fs.existsSync(filePath)) continue;
+    const ext = path.extname(filePath).toLowerCase();
+    let content = "";
+
+    try {
+      if (ext === ".docx") {
+        const mammoth = require("mammoth");
+        const buffer = await fs.promises.readFile(filePath);
+        const result = await mammoth.extractRawText({ buffer: buffer });
+        content = result.value;
+      } else if (
+        [
+          ".txt",
+          ".md",
+          ".html",
+          ".htm",
+          ".json",
+          ".js",
+          ".css",
+          ".csv",
+        ].includes(ext)
+      ) {
+        content = await fs.promises.readFile(filePath, "utf8");
+      } else {
+        continue;
+      }
+
+      const lowerContent = content.toLowerCase();
+      const idx = lowerContent.indexOf(q);
+
+      if (idx !== -1) {
+        const start = Math.max(0, idx - snippetLength);
+        const end = Math.min(content.length, idx + q.length + snippetLength);
+        let snippet = content.substring(start, end);
+        if (start > 0) snippet = "..." + snippet;
+        if (end < content.length) snippet = snippet + "...";
+
+        results.push({ file_path: filePath, snippet: snippet });
+      }
+    } catch (e) {
+      console.error(`Error searching file ${filePath}:`, e);
+    }
+  }
+  return results;
+});
+
 // Exports
 ipcMain.handle("export:file-notes", async (_e, filePath) => {
   const projects = await loadProjects();
@@ -226,36 +238,25 @@ ipcMain.handle("export:file-notes", async (_e, filePath) => {
   const annotations = hash ? await loadAnnotations(hash) : {};
   const notes = annotations.notes || "";
 
-  // find tags
   let tags = [];
   for (const [, proj] of Object.entries(projects)) {
-    const files = proj.files || [];
-    for (const f of files) {
-      if (f.file_path === filePath) {
-        tags = f.tags || [];
-        break;
-      }
-    }
+    const f = (proj.files || []).find((x) => x.file_path === filePath);
+    if (f) tags = f.tags || [];
   }
 
   const base = path.basename(filePath);
-  let md = `# Notes for ${base}\n\n`;
-  md += `**File path:** \`${filePath}\`\n\n`;
+  let md = `# Notes for ${base}\n\n**File:** \`${filePath}\`\n\n`;
   if (tags.length)
     md += `**Tags:** ${tags.map((t) => `\`${t}\``).join(", ")}\n\n`;
-  md += `---\n\n`;
-  md += notes ? notes + "\n" : "_No notes yet._\n";
+  md += `---\n\n${notes || "_No notes yet._"}\n`;
 
   const saveResult = await dialog.showSaveDialog({
-    title: "Export notes for this file",
+    title: "Export notes",
     defaultPath: `${base}-notes.md`,
-    filters: [{ name: "Markdown", extensions: ["md", "txt"] }],
+    filters: [{ name: "Markdown", extensions: ["md"] }],
   });
 
-  if (saveResult.canceled || !saveResult.filePath) {
-    return { ok: false, canceled: true };
-  }
-
+  if (saveResult.canceled || !saveResult.filePath) return { ok: false };
   await fs.promises.writeFile(saveResult.filePath, md, "utf8");
   return { ok: true, savedPath: saveResult.filePath };
 });
@@ -263,49 +264,25 @@ ipcMain.handle("export:file-notes", async (_e, filePath) => {
 ipcMain.handle("export:project-notes", async (_e, projectName) => {
   const projects = await loadProjects();
   const proj = projects[projectName] || { meta: {}, files: [] };
-  const projectFiles = proj.files || [];
 
-  let md = `# Notes for project: ${projectName}\n\n`;
-  const meta = proj.meta || {};
-  if (meta.type || meta.description) {
-    md += `**Type:** ${meta.type || "general"}\n\n`;
-    if (meta.description) md += `${meta.description}\n\n`;
-    md += `---\n\n`;
-  }
+  let md = `# Project: ${projectName}\n\n`;
+  if (proj.meta.description) md += `${proj.meta.description}\n\n`;
+  md += `---\n\n`;
 
-  if (projectFiles.length === 0) {
-    md += "_This project has no files._\n";
-  } else {
-    for (const f of projectFiles) {
-      const base = path.basename(f.file_path);
-      const hash = getHash(f.file_path);
-      const annotations = hash ? await loadAnnotations(hash) : {};
-      const notes = annotations.notes || "";
-      const tags = f.tags || [];
-
-      md += `## ${base}\n\n`;
-      md += `**Path:** \`${f.file_path}\`\n\n`;
-      if (tags.length)
-        md += `**Tags:** ${tags.map((t) => `\`${t}\``).join(", ")}\n\n`;
-      if (notes.trim()) {
-        md += notes.trim() + "\n\n";
-      } else {
-        md += "_No notes for this file._\n\n";
-      }
-      md += `---\n\n`;
-    }
+  for (const f of proj.files) {
+    const base = path.basename(f.file_path);
+    const hash = getHash(f.file_path);
+    const notes = hash ? (await loadAnnotations(hash)).notes || "" : "";
+    md += `## ${base}\n\n${notes || "_No notes._"}\n\n---\n\n`;
   }
 
   const saveResult = await dialog.showSaveDialog({
-    title: "Export notes for this project",
+    title: "Export Project Notes",
     defaultPath: `${projectName}-notes.md`,
-    filters: [{ name: "Markdown", extensions: ["md", "txt"] }],
+    filters: [{ name: "Markdown", extensions: ["md"] }],
   });
 
-  if (saveResult.canceled || !saveResult.filePath) {
-    return { ok: false, canceled: true };
-  }
-
+  if (saveResult.canceled || !saveResult.filePath) return { ok: false };
   await fs.promises.writeFile(saveResult.filePath, md, "utf8");
   return { ok: true, savedPath: saveResult.filePath };
 });

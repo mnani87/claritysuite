@@ -37,12 +37,10 @@
               <span id="project-meta-name"></span>
               <button id="rename-project-btn" title="Rename Project">✎</button>
             </div>
-
             <div id="project-dates">
               <div id="meta-created"></div>
               <div id="meta-updated"></div>
             </div>
-
             <textarea
               id="project-description"
               placeholder="Project description..."
@@ -58,14 +56,17 @@
       <main id="main">
         <div id="top-bar">
           <div id="search-group">
-            <input
-              id="project-search"
-              placeholder="Search filenames/tags in project…"
-            />
-            <input
-              id="global-search"
-              placeholder="Search filenames/tags everywhere…"
-            />
+            <div id="search-input-wrapper">
+              <input id="project-search" placeholder="Search filenames..." />
+              <div
+                id="content-search-toggle"
+                title="Deep content search (Press Enter)"
+              >
+                <input type="checkbox" id="content-search-checkbox" />
+                <label for="content-search-checkbox">Abc</label>
+              </div>
+            </div>
+            <input id="global-search" placeholder="Global Tag Search..." />
           </div>
           <button id="theme-toggle-btn" title="Toggle light/dark">Theme</button>
           <button id="about-btn" title="About Clarity Explorer">About</button>
@@ -77,105 +78,23 @@
             <p class="subtitle">
               Local-first project views over your real files.
             </p>
-
-            <div class="about-section">
-              <h3>What Clarity Explorer Does</h3>
-              <ul>
-                <li>
-                  <strong>Projects over real files:</strong> Group files from
-                  anywhere on disk without moving or copying them.
-                </li>
-                <li>
-                  <strong>Calm previews:</strong> Read text, Markdown, HTML,
-                  PDFs, images, and DOCX files in one quiet interface.
-                </li>
-                <li>
-                  <strong>Per-file notes:</strong> Notes stay linked to a file
-                  by its content hash and remain even as the file changes.
-                </li>
-                <li>
-                  <strong>Tags:</strong> Add simple tags and filter instantly.
-                </li>
-                <li>
-                  <strong>Search:</strong> Search filenames and tags within a
-                  project or across all projects.
-                </li>
-                <li>
-                  <strong>Open in native apps:</strong> Double-click to open the
-                  file in your default macOS application.
-                </li>
-                <li>
-                  <strong>Theme switching:</strong> Switch between Deep Slate
-                  and Light mode. Your preference is remembered.
-                </li>
-                <li>
-                  <strong>Non-destructive:</strong> Removing a file from a
-                  project never touches the file itself.
-                </li>
-              </ul>
-            </div>
-
             <div class="about-section">
               <h3>How It Works</h3>
-              <p>
-                Clarity Explorer adds a small <strong>JSON overlay</strong> on
-                top of your filesystem. The files stay exactly where they are.
-              </p>
               <ul>
                 <li>
-                  <strong>Virtual Projects:</strong> The app stores only
-                  paths—your folders are untouched.
+                  <strong>Split View:</strong> Document on top, Notes on bottom.
                 </li>
                 <li>
-                  <strong>Hash-based notes:</strong> Notes attach to the file’s
-                  content hash. If renamed or moved, use
-                  <strong>Locate</strong> to re-link.
+                  <strong>Deep Search:</strong> Toggle "Abc" to search inside
+                  text/docx files.
                 </li>
                 <li>
-                  <strong>No indexing:</strong> The app never scans or analyses
-                  file contents. Search is intentionally simple and predictable.
-                </li>
-                <li>
-                  <strong>Local-only:</strong> Everything is offline. No sync,
-                  accounts, telemetry, or uploads.
+                  <strong>PDF Search:</strong> Uses native browser search (Cmd+F
+                  integration).
                 </li>
               </ul>
             </div>
-
-            <div class="about-section">
-              <h3>Keyboard Shortcuts</h3>
-              <table class="shortcuts-table">
-                <tr>
-                  <th><kbd>⌘</kbd> + <kbd>N</kbd></th>
-                  <td>New Project</td>
-                </tr>
-                <tr>
-                  <th><kbd>⌘</kbd> + <kbd>O</kbd></th>
-                  <td>Add Files</td>
-                </tr>
-                <tr>
-                  <th><kbd>⌘</kbd> + <kbd>F</kbd></th>
-                  <td>Project Search</td>
-                </tr>
-                <tr>
-                  <th><kbd>⌘</kbd> + <kbd>Shift</kbd> + <kbd>F</kbd></th>
-                  <td>Global Search</td>
-                </tr>
-                <tr>
-                  <th><kbd>Enter</kbd></th>
-                  <td>Add tag</td>
-                </tr>
-                <tr>
-                  <th>Double-click file</th>
-                  <td>Open in native app</td>
-                </tr>
-              </table>
-            </div>
-
-            <p class="about-footer">
-              ClarityExplorer • A quiet, offline tool for organising and reading
-              your own files.
-            </p>
+            <p class="about-footer">v0.2.0 • Local-First</p>
           </div>
         </div>
 
@@ -184,7 +103,7 @@
             <header class="panel-header">
               <span>Files</span>
               <div class="panel-buttons">
-                <button id="add-file-btn">＋ Add Files</button>
+                <button id="add-file-btn">＋ Add</button>
                 <button id="remove-file-btn">− Remove</button>
                 <button id="open-file-btn">↗ Open</button>
               </div>
@@ -196,25 +115,48 @@
             <header class="panel-header">
               <span id="preview-title"></span>
               <div class="panel-buttons">
-                <button id="export-file-notes-btn">Export Notes (File)</button>
-                <button id="export-project-notes-btn">
-                  Export Notes (Project)
+                <button
+                  id="toggle-search-btn"
+                  title="Find in file"
+                  class="hidden"
+                >
+                  🔍
                 </button>
+                <button id="export-file-notes-btn">Export Notes</button>
               </div>
             </header>
 
-            <div id="preview-area">
-              <div id="preview-body"></div>
+            <div id="split-container">
+              <div id="file-view-pane">
+                <div id="preview-search-bar" class="hidden">
+                  <input
+                    id="preview-search-input"
+                    placeholder="Find in document..."
+                  />
+                  <span id="search-count">0/0</span>
+                  <button id="search-prev-btn">↑</button>
+                  <button id="search-next-btn">↓</button>
+                  <button id="search-close-btn">✕</button>
+                </div>
+                <div id="preview-body"></div>
+              </div>
 
-              <div id="notes-header">Notes</div>
-              <textarea
-                id="notes-box"
-                placeholder="Write your notes here (Markdown supported in export)..."
-              ></textarea>
-
-              <div id="tags-header">Tags</div>
-              <div id="tags-container"></div>
-              <input id="tag-input" placeholder="Add tag…" />
+              <div id="meta-view-pane">
+                <div id="meta-tabs">
+                  <div id="notes-header">Notes</div>
+                  <div id="tags-header">Tags</div>
+                </div>
+                <div id="meta-content-wrapper">
+                  <textarea
+                    id="notes-box"
+                    placeholder="Write your notes here..."
+                  ></textarea>
+                  <div id="tags-wrapper">
+                    <div id="tags-container"></div>
+                    <input id="tag-input" placeholder="Add tag…" />
+                  </div>
+                </div>
+              </div>
             </div>
           </section>
         </div>

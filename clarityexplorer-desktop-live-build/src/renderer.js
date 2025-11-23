@@ -8,25 +8,40 @@ let currentFilePath = null;
 let currentFileHash = null;
 let currentAnnotations = { notes: "", highlights: [] };
 
+// Search State
+let searchMatches = [];
+let currentMatchIndex = -1;
+
 // -------------------------------------------------------------
 // ELEMENTS
 // -------------------------------------------------------------
-// Lists & Preview
 const projectListEl = document.getElementById("project-list");
 const fileListEl = document.getElementById("file-list");
 const previewTitleEl = document.getElementById("preview-title");
 const previewBodyEl = document.getElementById("preview-body");
+
+// Preview Search Elements
+const toggleSearchBtn = document.getElementById("toggle-search-btn");
+const previewSearchBar = document.getElementById("preview-search-bar");
+const previewSearchInput = document.getElementById("preview-search-input");
+const searchPrevBtn = document.getElementById("search-prev-btn");
+const searchNextBtn = document.getElementById("search-next-btn");
+const searchCloseBtn = document.getElementById("search-close-btn");
+const searchCountEl = document.getElementById("search-count");
 
 // Notes & Tags
 const notesBoxEl = document.getElementById("notes-box");
 const tagsContainerEl = document.getElementById("tags-container");
 const tagInputEl = document.getElementById("tag-input");
 
-// Search
+// Sidebar Search
 const projectSearchEl = document.getElementById("project-search");
+const contentSearchCheckbox = document.getElementById(
+  "content-search-checkbox"
+);
 const globalSearchEl = document.getElementById("global-search");
 
-// Buttons (Toolbar)
+// Buttons
 const addProjectBtn = document.getElementById("add-project-btn");
 const addFileBtn = document.getElementById("add-file-btn");
 const removeFileBtn = document.getElementById("remove-file-btn");
@@ -37,18 +52,16 @@ const exportProjectNotesBtn = document.getElementById(
   "export-project-notes-btn"
 );
 
-// New Project Bar
+// UI Layout
 const newProjectBar = document.getElementById("new-project-bar");
 const newProjectInput = document.getElementById("new-project-input");
 const newProjectCreate = document.getElementById("new-project-create");
 const newProjectCancel = document.getElementById("new-project-cancel");
-
-// Global UI
 const themeToggleBtn = document.getElementById("theme-toggle-btn");
 const aboutBtn = document.getElementById("about-btn");
 const aboutPanel = document.getElementById("about-panel");
 
-// Project Meta Panel (Sidebar)
+// Meta
 const projectMetaPanel = document.getElementById("project-meta-panel");
 const projectMetaNameEl = document.getElementById("project-meta-name");
 const projectDescriptionEl = document.getElementById("project-description");
@@ -56,325 +69,181 @@ const renameProjectBtn = document.getElementById("rename-project-btn");
 const metaCreatedEl = document.getElementById("meta-created");
 const metaUpdatedEl = document.getElementById("meta-updated");
 
-// Rename Modal Elements
+// Modal
 const renameModal = document.getElementById("rename-modal");
 const renameInput = document.getElementById("rename-input");
 const renameConfirmBtn = document.getElementById("rename-confirm-btn");
 const renameCancelBtn = document.getElementById("rename-cancel-btn");
 
 // -------------------------------------------------------------
-// THEME
-// -------------------------------------------------------------
-function applyTheme(theme) {
-  const t = theme === "light" ? "light" : "dark";
-  document.documentElement.setAttribute("data-theme", t);
-  localStorage.setItem("clarityExplorerTheme", t);
-}
-
-// -------------------------------------------------------------
-// INIT
+// INIT & GLOBAL LISTENERS
 // -------------------------------------------------------------
 (async function init() {
-  const savedTheme = localStorage.getItem("clarityExplorerTheme");
-  applyTheme(savedTheme || "dark");
-
-  // Load projects safely via Bridge
+  const savedTheme = localStorage.getItem("clarityExplorerTheme") || "dark";
+  applyTheme(savedTheme);
   try {
     projects = await window.api.loadProjects();
   } catch (e) {
-    console.error("Failed to load projects:", e);
     projects = {};
   }
-
   if (!projects) projects = {};
   renderProjects();
 })();
 
-// Global Button Listeners
-if (themeToggleBtn) {
+function applyTheme(t) {
+  document.documentElement.setAttribute("data-theme", t);
+  localStorage.setItem("clarityExplorerTheme", t);
+}
+
+if (themeToggleBtn)
   themeToggleBtn.onclick = () => {
     const current =
       document.documentElement.getAttribute("data-theme") || "dark";
     applyTheme(current === "dark" ? "light" : "dark");
   };
-}
 
-if (aboutBtn && aboutPanel) {
-  aboutBtn.onclick = () => {
-    aboutPanel.classList.toggle("hidden");
+if (aboutBtn && aboutPanel)
+  aboutBtn.onclick = () => aboutPanel.classList.toggle("hidden");
+
+// -------------------------------------------------------------
+// SIDEBAR SEARCH (DEEP CONTENT & FILE LIST)
+// -------------------------------------------------------------
+if (projectSearchEl) {
+  projectSearchEl.oninput = () => {
+    if (contentSearchCheckbox && contentSearchCheckbox.checked) return;
+    renderFileList(false);
+  };
+
+  projectSearchEl.onkeydown = async (e) => {
+    if (
+      e.key === "Enter" &&
+      contentSearchCheckbox &&
+      contentSearchCheckbox.checked
+    ) {
+      await performContentSearch();
+    }
   };
 }
 
-// Search Listeners
-projectSearchEl.oninput = () => renderFileList(false);
-globalSearchEl.oninput = () => renderFileList(true);
+if (contentSearchCheckbox) {
+  contentSearchCheckbox.onchange = () => {
+    if (contentSearchCheckbox.checked) {
+      projectSearchEl.placeholder = "Search content (Press Enter)...";
+    } else {
+      projectSearchEl.placeholder = "Search filenames...";
+      renderFileList(false);
+    }
+  };
+}
 
-// Toolbar Listeners
-addProjectBtn.onclick = () => toggleNewProjectBar();
-addFileBtn.onclick = () => onAddFiles();
-removeFileBtn.onclick = () => onRemoveFile();
-deleteProjectBtn.onclick = () => onDeleteProject();
-renameProjectBtn.onclick = () => renameProject(); // Triggers Modal
+if (globalSearchEl) globalSearchEl.oninput = () => renderFileList(true);
 
-openFileBtn.onclick = () => {
-  if (!currentFilePath) {
-    alert("Select a file to open.");
+async function performContentSearch() {
+  const query = projectSearchEl.value.trim();
+  if (!currentProject || !query) return;
+
+  fileListEl.innerHTML = `<li style="pointer-events:none; color:var(--ink-dim); padding:1rem;">Searching content...</li>`;
+
+  const proj = projects[currentProject];
+  const filesToCheck = proj.files.map((f) => f.file_path);
+
+  const results = await window.api.searchProjectContent(filesToCheck, query);
+
+  fileListEl.innerHTML = "";
+  if (results.length === 0) {
+    fileListEl.innerHTML = `<li style="pointer-events:none; color:var(--ink-dim); padding:1rem;">No matches found in content.</li>`;
     return;
   }
-  openExternally(currentFilePath);
-};
 
-exportFileNotesBtn.onclick = () => onExportFileNotes();
-exportProjectNotesBtn.onclick = () => onExportProjectNotes();
+  results.forEach((match) => {
+    const base = window.api.path.basename(match.file_path);
+    const li = document.createElement("li");
+    li.className = "search-result-item";
 
-// New Project Bar Listeners
-newProjectCreate.onclick = () => createProject();
-newProjectCancel.onclick = () => hideNewProjectBar();
-newProjectInput.onkeydown = (e) => {
-  if (e.key === "Enter") createProject();
-  if (e.key === "Escape") hideNewProjectBar();
-};
+    const title = document.createElement("div");
+    title.textContent = base;
+    title.style.fontWeight = "bold";
 
-// Rename Modal Listeners (Safe Check)
-if (renameModal && renameCancelBtn && renameConfirmBtn && renameInput) {
-  renameCancelBtn.onclick = () => {
-    renameModal.classList.add("hidden");
+    const snippet = document.createElement("div");
+    snippet.className = "search-snippet";
+    snippet.textContent = match.snippet;
+
+    li.appendChild(title);
+    li.appendChild(snippet);
+
+    li.onclick = () => {
+      [...fileListEl.children].forEach((c) => c.classList.remove("selected"));
+      li.classList.add("selected");
+      loadFile({
+        project: currentProject,
+        file_path: match.file_path,
+        tags: [],
+      });
+
+      setTimeout(() => {
+        if (toggleSearchBtn && !toggleSearchBtn.classList.contains("hidden")) {
+          if (previewSearchBar && previewSearchBar.classList.contains("hidden"))
+            toggleSearchBtn.click();
+          if (previewSearchInput) {
+            previewSearchInput.value = query;
+            performSearch(query);
+          }
+        }
+      }, 300);
+    };
+    fileListEl.appendChild(li);
+  });
+}
+
+// -------------------------------------------------------------
+// CRUD & TOOLBAR
+// -------------------------------------------------------------
+if (addProjectBtn) addProjectBtn.onclick = () => toggleNewProjectBar();
+if (addFileBtn) addFileBtn.onclick = () => onAddFiles();
+if (removeFileBtn) removeFileBtn.onclick = () => onRemoveFile();
+if (deleteProjectBtn) deleteProjectBtn.onclick = () => onDeleteProject();
+if (renameProjectBtn) renameProjectBtn.onclick = () => renameProject();
+if (openFileBtn)
+  openFileBtn.onclick = () => {
+    if (currentFilePath) openExternally(currentFilePath);
+    else alert("Select a file to open.");
   };
-  renameConfirmBtn.onclick = () => {
-    confirmRename();
+if (exportFileNotesBtn) exportFileNotesBtn.onclick = () => onExportFileNotes();
+if (exportProjectNotesBtn)
+  exportProjectNotesBtn.onclick = () => onExportProjectNotes();
+
+if (newProjectCreate) newProjectCreate.onclick = () => createProject();
+if (newProjectCancel) newProjectCancel.onclick = () => hideNewProjectBar();
+if (newProjectInput)
+  newProjectInput.onkeydown = (e) => {
+    if (e.key === "Enter") createProject();
+    if (e.key === "Escape") hideNewProjectBar();
   };
+
+if (renameModal && renameCancelBtn) {
+  renameCancelBtn.onclick = () => renameModal.classList.add("hidden");
+  renameConfirmBtn.onclick = () => confirmRename();
   renameInput.onkeydown = (e) => {
     if (e.key === "Enter") confirmRename();
     if (e.key === "Escape") renameModal.classList.add("hidden");
   };
 }
 
-// Autosave & Input Listeners
-notesBoxEl.onblur = saveNotes;
-projectDescriptionEl.onblur = saveProjectMeta;
-
-tagInputEl.onkeydown = (e) => {
-  if (e.key === "Enter") {
-    const val = tagInputEl.value.trim();
-    if (val) {
-      addTag(val);
+if (notesBoxEl) notesBoxEl.onblur = saveNotes;
+if (projectDescriptionEl) projectDescriptionEl.onblur = saveProjectMeta;
+if (tagInputEl)
+  tagInputEl.onkeydown = (e) => {
+    if (e.key === "Enter" && tagInputEl.value.trim()) {
+      addTag(tagInputEl.value.trim());
       tagInputEl.value = "";
     }
-  }
-};
+  };
 
 // -------------------------------------------------------------
-// KEYBOARD SHORTCUTS
-// -------------------------------------------------------------
-document.addEventListener("keydown", (e) => {
-  const meta = e.metaKey || e.ctrlKey;
-  if (!meta) return;
-
-  if (meta && !e.shiftKey && e.key.toLowerCase() === "n") {
-    e.preventDefault();
-    toggleNewProjectBar();
-  } else if (meta && !e.shiftKey && e.key.toLowerCase() === "o") {
-    e.preventDefault();
-    onAddFiles();
-  } else if (meta && !e.shiftKey && e.key.toLowerCase() === "f") {
-    e.preventDefault();
-    projectSearchEl.focus();
-    projectSearchEl.select();
-  } else if (meta && e.shiftKey && e.key.toLowerCase() === "f") {
-    e.preventDefault();
-    globalSearchEl.focus();
-    globalSearchEl.select();
-  }
-});
-
-// -------------------------------------------------------------
-// Project Meta & Renaming logic
-// -------------------------------------------------------------
-function loadProjectMeta() {
-  if (!currentProject || !projects[currentProject]) {
-    projectMetaPanel.classList.add("hidden");
-    projectMetaNameEl.textContent = "";
-    projectDescriptionEl.value = "";
-    return;
-  }
-
-  const proj = projects[currentProject];
-  const meta = proj.meta || {};
-
-  projectMetaPanel.classList.remove("hidden");
-  projectMetaNameEl.textContent = currentProject;
-  projectDescriptionEl.value = meta.description || "";
-
-  // Format Dates
-  const created = meta.created_at
-    ? new Date(meta.created_at).toLocaleDateString()
-    : "-";
-  const updated = meta.updated_at
-    ? new Date(meta.updated_at).toLocaleDateString()
-    : "-";
-
-  if (metaCreatedEl) metaCreatedEl.textContent = `Created: ${created}`;
-  if (metaUpdatedEl) metaUpdatedEl.textContent = `Updated: ${updated}`;
-}
-
-function saveProjectMeta() {
-  if (!currentProject || !projects[currentProject]) return;
-  const proj = projects[currentProject];
-  if (!proj.meta) proj.meta = {};
-
-  const now = new Date().toISOString();
-  proj.meta.description = projectDescriptionEl.value || "";
-  proj.meta.updated_at = now;
-
-  if (!proj.meta.created_at) proj.meta.created_at = now;
-
-  window.api.saveProjects(projects);
-  loadProjectMeta(); // Refresh date display
-}
-
-// 1. Triggered by Pencil Icon
-function renameProject() {
-  if (!currentProject) return;
-  renameInput.value = currentProject;
-  renameModal.classList.remove("hidden");
-  renameInput.focus();
-  renameInput.select();
-}
-
-// 2. Triggered by Modal Button
-async function confirmRename() {
-  const newName = renameInput.value.trim();
-
-  if (!newName || newName === currentProject) {
-    renameModal.classList.add("hidden");
-    return;
-  }
-
-  if (projects[newName]) {
-    alert("A project with that name already exists.");
-    return;
-  }
-
-  // Copy data to new key
-  projects[newName] = projects[currentProject];
-
-  // Update timestamp
-  projects[newName].meta.updated_at = new Date().toISOString();
-
-  // Delete old key
-  delete projects[currentProject];
-
-  // Save and switch
-  await window.api.saveProjects(projects);
-  currentProject = newName;
-
-  // Cleanup UI
-  renameModal.classList.add("hidden");
-  renderProjects();
-  loadProjectMeta();
-  renderFileList(false);
-}
-
-// -------------------------------------------------------------
-// Project CRUD
-// -------------------------------------------------------------
-function toggleNewProjectBar() {
-  if (newProjectBar.classList.contains("hidden")) {
-    newProjectInput.value = "";
-    newProjectBar.classList.remove("hidden");
-    newProjectBar.style.display = "flex";
-    newProjectInput.focus();
-  } else {
-    hideNewProjectBar();
-  }
-}
-
-function hideNewProjectBar() {
-  newProjectBar.classList.add("hidden");
-}
-
-function createProject() {
-  const name = newProjectInput.value.trim();
-  if (!name) return hideNewProjectBar();
-  if (!projects[name]) {
-    const now = new Date().toISOString();
-    projects[name] = {
-      meta: {
-        type: "general",
-        description: "",
-        created_at: now,
-        updated_at: now,
-      },
-      files: [],
-    };
-    window.api.saveProjects(projects);
-    currentProject = name;
-    renderProjects();
-    renderFileList(false);
-    loadProjectMeta();
-  }
-  hideNewProjectBar();
-}
-
-function onDeleteProject() {
-  if (!currentProject) {
-    alert("No project selected.");
-    return;
-  }
-  const ok = confirm(
-    `Delete project "${currentProject}" from Clarity Explorer?\n\nThis does NOT delete any files on disk.`
-  );
-  if (!ok) return;
-
-  delete projects[currentProject];
-  window.api.saveProjects(projects);
-
-  currentProject = null;
-  currentFilePath = null;
-  currentFileHash = null;
-  currentAnnotations = { notes: "", highlights: [] };
-
-  projectSearchEl.value = "";
-  globalSearchEl.value = "";
-  previewTitleEl.textContent = "";
-  previewBodyEl.innerHTML = "";
-  notesBoxEl.value = "";
-  tagsContainerEl.innerHTML = "";
-
-  loadProjectMeta();
-  renderProjects();
-  renderFileList(false);
-}
-
-// -------------------------------------------------------------
-// Export Notes
-// -------------------------------------------------------------
-async function onExportFileNotes() {
-  if (!currentFilePath) {
-    alert("Select a file first.");
-    return;
-  }
-  const res = await window.api.exportFileNotes(currentFilePath);
-  if (res && res.ok && res.savedPath) {
-    alert("Notes exported to:\n" + res.savedPath);
-  }
-}
-
-async function onExportProjectNotes() {
-  if (!currentProject) {
-    alert("Select a project first.");
-    return;
-  }
-  const res = await window.api.exportProjectNotes(currentProject);
-  if (res && res.ok && res.savedPath) {
-    alert("Project notes exported to:\n" + res.savedPath);
-  }
-}
-
-// -------------------------------------------------------------
-// Rendering: Projects
+// RENDERERS
 // -------------------------------------------------------------
 function renderProjects() {
+  if (!projectListEl) return;
   projectListEl.innerHTML = "";
   Object.keys(projects).forEach((name) => {
     const li = document.createElement("li");
@@ -382,167 +251,100 @@ function renderProjects() {
     if (name === currentProject) li.classList.add("active");
     li.onclick = () => {
       currentProject = name;
-      projectSearchEl.value = "";
-      globalSearchEl.value = "";
+      if (projectSearchEl) {
+        projectSearchEl.value = "";
+        projectSearchEl.placeholder = "Search filenames...";
+      }
+      if (contentSearchCheckbox) contentSearchCheckbox.checked = false;
       renderProjects();
       renderFileList(false);
       loadProjectMeta();
     };
     projectListEl.appendChild(li);
   });
-
   loadProjectMeta();
 }
 
-// -------------------------------------------------------------
-// FILES
-// -------------------------------------------------------------
-async function onAddFiles() {
-  if (!currentProject) {
-    alert("Select a project first.");
-    return;
-  }
-  const paths = await window.api.pickFiles();
-  if (!paths || paths.length === 0) return;
-
-  const proj = projects[currentProject];
-  const list = proj.files;
-  paths.forEach((p) => {
-    if (!list.some((f) => f.file_path === p)) {
-      list.push({ file_path: p, tags: [] });
-    }
-  });
-
-  proj.meta.updated_at = new Date().toISOString();
-  window.api.saveProjects(projects);
-  renderFileList(false);
-}
-
-function onRemoveFile() {
-  if (!currentProject || !currentFilePath) {
-    alert("Select a file to remove from this project.");
-    return;
-  }
-  // Use exposed path helper
-  const base = window.api.path.basename(currentFilePath);
-  const ok = confirm(
-    `Remove "${base}" from project "${currentProject}"?\n\nThe file will NOT be deleted from disk.`
-  );
-  if (!ok) return;
-
-  const proj = projects[currentProject];
-  proj.files = proj.files.filter((f) => f.file_path !== currentFilePath);
-  proj.meta.updated_at = new Date().toISOString();
-  window.api.saveProjects(projects);
-
-  currentFilePath = null;
-  previewTitleEl.textContent = "";
-  previewBodyEl.innerHTML = "";
-  notesBoxEl.value = "";
-  tagsContainerEl.innerHTML = "";
-
-  renderFileList(false);
-}
-
 function renderFileList(globalMode = false) {
+  if (!fileListEl) return;
   fileListEl.innerHTML = "";
   currentFiles = [];
+  const pf = projectSearchEl ? projectSearchEl.value.toLowerCase().trim() : "";
+  const gf = globalSearchEl ? globalSearchEl.value.toLowerCase().trim() : "";
 
-  const pf = projectSearchEl.value.toLowerCase().trim();
-  const gf = globalSearchEl.value.toLowerCase().trim();
-
+  let source = [];
   if (globalMode && gf) {
-    Object.entries(projects).forEach(([projName, proj]) => {
-      const files = proj.files || [];
-      files.forEach((f) => {
-        const base = window.api.path.basename(f.file_path);
-        const tags = (f.tags || []).join(" ");
-        const match = (base + " " + tags).toLowerCase();
-        if (match.includes(gf)) {
-          currentFiles.push({
-            project: projName,
-            file_path: f.file_path,
-            tags: f.tags || [],
-          });
-        }
-      });
+    Object.entries(projects).forEach(([pName, pObj]) => {
+      (pObj.files || []).forEach((f) => source.push({ ...f, project: pName }));
     });
   } else if (currentProject && projects[currentProject]) {
-    const files = projects[currentProject].files || [];
-    files.forEach((f) => {
-      const base = window.api.path.basename(f.file_path);
-      const tags = (f.tags || []).join(" ");
-      const match = (base + " " + tags).toLowerCase();
-      if (!pf || match.includes(pf)) {
-        currentFiles.push({
-          project: currentProject,
-          file_path: f.file_path,
-          tags: f.tags || [],
-        });
-      }
-    });
+    source = projects[currentProject].files || [];
   }
 
-  currentFiles.forEach((f) => {
+  source.forEach((f) => {
     const base = window.api.path.basename(f.file_path);
-    const li = document.createElement("li");
-    li.textContent = base;
+    const tags = (f.tags || []).join(" ");
+    const matchStr = (base + " " + tags).toLowerCase();
+    const query = globalMode ? gf : pf;
 
-    li.onclick = () => {
-      [...fileListEl.children].forEach((c) => c.classList.remove("selected"));
-      li.classList.add("selected");
-      loadFile(f);
-    };
-
-    li.ondblclick = () => {
-      openExternally(f.file_path);
-    };
-
-    fileListEl.appendChild(li);
+    if (!query || matchStr.includes(query)) {
+      const item = { ...f, project: f.project || currentProject };
+      currentFiles.push(item);
+      const li = document.createElement("li");
+      li.textContent = base;
+      li.onclick = () => {
+        [...fileListEl.children].forEach((c) => c.classList.remove("selected"));
+        li.classList.add("selected");
+        loadFile(item);
+      };
+      li.ondblclick = () => openExternally(item.file_path);
+      fileListEl.appendChild(li);
+    }
   });
 }
 
-// -------------------------------------------------------------
-// FILE PREVIEW + MISSING FILE HANDLING
-// -------------------------------------------------------------
 async function loadFile(f) {
   const owningProject = f.project || currentProject;
-
   currentFilePath = f.file_path;
   previewTitleEl.textContent = currentFilePath;
   previewBodyEl.innerHTML = "";
   notesBoxEl.value = "";
   tagsContainerEl.innerHTML = "";
-  currentFileHash = await window.api.getHash(currentFilePath);
 
+  closePreviewSearch();
+
+  currentFileHash = await window.api.getHash(currentFilePath);
   if (currentFileHash) {
     currentAnnotations = await window.api.loadAnnotations(currentFileHash);
   } else {
     currentAnnotations = {};
   }
-
-  // Notes
   notesBoxEl.value = currentAnnotations.notes || "";
 
-  // Tags
   let tags = f.tags || [];
   if (owningProject && projects[owningProject]) {
-    const fileObj = (projects[owningProject].files || []).find(
+    const fileObj = projects[owningProject].files.find(
       (x) => x.file_path === currentFilePath
     );
     if (fileObj && fileObj.tags) tags = fileObj.tags;
   }
   tags.forEach((t) => makeTagChip(t));
 
-  // Check if file exists
   const exists = await window.api.fileExists(currentFilePath);
   if (!exists) {
     showMissingFileUI(owningProject, currentFilePath);
     return;
   }
 
-  // Preview based on extension
   const ext = currentFilePath.split(".").pop().toLowerCase();
+  if (toggleSearchBtn) {
+    if (["txt", "md", "html", "htm", "docx", "pdf"].includes(ext)) {
+      toggleSearchBtn.classList.remove("hidden");
+    } else {
+      toggleSearchBtn.classList.add("hidden");
+    }
+  }
+
   if (["txt", "md"].includes(ext)) return previewText();
   if (["html", "htm"].includes(ext)) return previewHTML();
   if (["png", "jpg", "jpeg", "gif"].includes(ext)) return previewImage();
@@ -552,155 +354,345 @@ async function loadFile(f) {
   previewBodyEl.textContent = "No preview for this file type.";
 }
 
-function showMissingFileUI(projectName, filePath) {
-  const base = window.api.path.basename(filePath);
-  previewBodyEl.innerHTML = `
-    <div class="missing-file">
-      <p>
-        The file <strong>${base}</strong> could not be found at:<br />
-        <code>${filePath}</code>
-      </p>
-      <div class="missing-file-actions">
-        <button id="locate-file-btn">Locate…</button>
-        <button id="remove-file-inline-btn">Remove from project</button>
-      </div>
-    </div>
-  `;
+// -------------------------------------------------------------
+// PREVIEW SEARCH LOGIC (Safe Listeners)
+// -------------------------------------------------------------
+window.api.onFoundResult((result) => {
+  if (currentFilePath && currentFilePath.toLowerCase().endsWith(".pdf")) {
+    if (searchCountEl)
+      searchCountEl.textContent = `${result.activeMatchOrdinal}/${result.matches}`;
+  }
+});
 
-  const locateBtn = document.getElementById("locate-file-btn");
-  const removeBtn = document.getElementById("remove-file-inline-btn");
-
-  locateBtn.onclick = async () => {
-    const paths = await window.api.pickFiles();
-    if (!paths || paths.length === 0) return;
-    const newPath = paths[0];
-
-    // FIX: Migrate the old notes to the new file hash
-    await window.api.migrateAnnotations(filePath, newPath);
-
-    const proj = projects[projectName];
-    if (!proj) return;
-    const fileObj = (proj.files || []).find((f) => f.file_path === filePath);
-    if (!fileObj) return;
-
-    fileObj.file_path = newPath;
-    proj.meta.updated_at = new Date().toISOString();
-    window.api.saveProjects(projects);
-
-    currentFilePath = newPath;
-    renderFileList(false);
-    loadFile({
-      project: projectName,
-      file_path: newPath,
-      tags: fileObj.tags || [],
-    });
+if (toggleSearchBtn && previewSearchBar && previewSearchInput) {
+  toggleSearchBtn.onclick = () => {
+    if (previewSearchBar.classList.contains("hidden")) {
+      previewSearchBar.classList.remove("hidden");
+      previewSearchInput.focus();
+      if (previewSearchInput.value) performSearch(previewSearchInput.value);
+    } else {
+      closePreviewSearch();
+    }
   };
 
-  removeBtn.onclick = () => {
-    const proj = projects[projectName];
-    if (!proj) return;
-    proj.files = (proj.files || []).filter((f) => f.file_path !== filePath);
-    proj.meta.updated_at = new Date().toISOString();
-    window.api.saveProjects(projects);
+  if (searchCloseBtn) searchCloseBtn.onclick = closePreviewSearch;
 
-    if (projectName === currentProject) {
-      renderFileList(false);
+  previewSearchInput.oninput = (e) => performSearch(e.target.value);
+  previewSearchInput.onkeydown = (e) => {
+    if (e.key === "Enter") {
+      if (e.shiftKey) navigateSearch(-1);
+      else navigateSearch(1);
     }
+    if (e.key === "Escape") closePreviewSearch();
+  };
 
-    previewTitleEl.textContent = "";
-    previewBodyEl.innerHTML = "File removed from project.";
-    notesBoxEl.value = "";
-    tagsContainerEl.innerHTML = "";
+  if (searchNextBtn) searchNextBtn.onclick = () => navigateSearch(1);
+  if (searchPrevBtn) searchPrevBtn.onclick = () => navigateSearch(-1);
+}
+
+function closePreviewSearch() {
+  if (previewSearchBar) previewSearchBar.classList.add("hidden");
+  if (previewSearchInput) previewSearchInput.value = "";
+  if (searchCountEl) searchCountEl.textContent = "0/0";
+  clearHighlights();
+  window.api.findStop();
+}
+
+function performSearch(term) {
+  const isPdf =
+    currentFilePath && currentFilePath.toLowerCase().endsWith(".pdf");
+  if (!term || term.length < 2) {
+    if (searchCountEl) searchCountEl.textContent = "0/0";
+    if (isPdf) window.api.findStop();
+    else clearHighlights();
+    return;
+  }
+  if (isPdf) window.api.findStart(term);
+  else performDomSearch(term);
+}
+
+function navigateSearch(direction) {
+  const isPdf =
+    currentFilePath && currentFilePath.toLowerCase().endsWith(".pdf");
+  const term = previewSearchInput.value;
+  if (isPdf) {
+    window.api.findNext(term, direction === 1);
+  } else {
+    if (searchMatches.length === 0) return;
+    currentMatchIndex += direction;
+    if (currentMatchIndex >= searchMatches.length) currentMatchIndex = 0;
+    if (currentMatchIndex < 0) currentMatchIndex = searchMatches.length - 1;
+    if (searchCountEl)
+      searchCountEl.textContent = `${currentMatchIndex + 1}/${
+        searchMatches.length
+      }`;
+    highlightActiveMatch();
+  }
+}
+
+function clearHighlights() {
+  const highlights = previewBodyEl.querySelectorAll(".search-highlight");
+  highlights.forEach((span) => {
+    const parent = span.parentNode;
+    parent.replaceChild(document.createTextNode(span.textContent), span);
+    parent.normalize();
+  });
+  searchMatches = [];
+  currentMatchIndex = -1;
+}
+
+function performDomSearch(term) {
+  clearHighlights();
+  const walker = document.createTreeWalker(
+    previewBodyEl,
+    NodeFilter.SHOW_TEXT,
+    null,
+    false
+  );
+  const textNodes = [];
+  let node;
+  while ((node = walker.nextNode())) textNodes.push(node);
+
+  const regex = new RegExp(`(${escapeRegExp(term)})`, "gi");
+  textNodes.forEach((textNode) => {
+    const text = textNode.nodeValue;
+    if (regex.test(text)) {
+      const fragment = document.createDocumentFragment();
+      let lastIdx = 0;
+      text.replace(regex, (match, p1, offset) => {
+        fragment.appendChild(
+          document.createTextNode(text.slice(lastIdx, offset))
+        );
+        const span = document.createElement("span");
+        span.className = "search-highlight";
+        span.textContent = match;
+        fragment.appendChild(span);
+        lastIdx = offset + match.length;
+      });
+      fragment.appendChild(document.createTextNode(text.slice(lastIdx)));
+      textNode.parentNode.replaceChild(fragment, textNode);
+    }
+  });
+
+  searchMatches = Array.from(
+    previewBodyEl.querySelectorAll(".search-highlight")
+  );
+  if (searchCountEl)
+    searchCountEl.textContent = `${searchMatches.length > 0 ? 1 : 0}/${
+      searchMatches.length
+    }`;
+  if (searchMatches.length > 0) {
+    currentMatchIndex = 0;
+    highlightActiveMatch();
+  }
+}
+
+function highlightActiveMatch() {
+  searchMatches.forEach((m) => m.classList.remove("active"));
+  const active = searchMatches[currentMatchIndex];
+  if (active) {
+    active.classList.add("active");
+    active.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+}
+
+function escapeRegExp(string) {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+// -------------------------------------------------------------
+// UTILS / MISSING FILE
+// -------------------------------------------------------------
+function showMissingFileUI(projectName, filePath) {
+  const base = window.api.path.basename(filePath);
+  previewBodyEl.innerHTML = `<div class="missing-file"><p>Missing: <code>${filePath}</code></p><div class="missing-file-actions"><button id="locate-file-btn">Locate…</button><button id="remove-file-inline-btn">Remove</button></div></div>`;
+
+  document.getElementById("locate-file-btn").onclick = async () => {
+    const paths = await window.api.pickFiles();
+    if (!paths || !paths.length) return;
+    await window.api.migrateAnnotations(filePath, paths[0]);
+    const proj = projects[projectName];
+    if (proj) {
+      const f = proj.files.find((x) => x.file_path === filePath);
+      if (f) {
+        f.file_path = paths[0];
+        window.api.saveProjects(projects);
+      }
+    }
+    renderFileList(false);
+    loadFile({ project: projectName, file_path: paths[0], tags: [] });
+  };
+
+  document.getElementById("remove-file-inline-btn").onclick = () => {
+    const proj = projects[projectName];
+    if (proj) {
+      proj.files = proj.files.filter((f) => f.file_path !== filePath);
+      window.api.saveProjects(projects);
+    }
+    renderFileList(false);
+    previewBodyEl.innerHTML = "";
   };
 }
 
 async function previewText() {
   const res = await window.api.readText(currentFilePath);
-  previewBodyEl.textContent = res.ok ? res.contents : "Error loading file.";
+  previewBodyEl.textContent = res.ok ? res.contents : "Error";
 }
-
 async function previewHTML() {
   const res = await window.api.readText(currentFilePath);
-  previewBodyEl.innerHTML = res.ok ? res.contents : "Error loading file.";
+  previewBodyEl.innerHTML = res.ok ? res.contents : "Error";
 }
-
 function previewImage() {
   previewBodyEl.innerHTML = `<img src="file://${currentFilePath}" style="max-width:100%;" />`;
 }
-
 function previewPDF() {
-  previewBodyEl.innerHTML = `
-    <iframe src="file://${currentFilePath}" style="width:100%;height:80vh;border:none;"></iframe>
-  `;
+  previewBodyEl.innerHTML = `<iframe src="file://${currentFilePath}" style="width:100%;height:100%;border:none;"></iframe>`;
 }
-
 async function previewDocx() {
   const res = await window.api.readDocx(currentFilePath);
-  previewBodyEl.innerHTML = res.ok ? res.html : "Error loading DOCX.";
+  previewBodyEl.innerHTML = res.ok ? res.html : "Error";
 }
 
-// -------------------------------------------------------------
-// NOTES
-// -------------------------------------------------------------
+function loadProjectMeta() {
+  if (!currentProject || !projects[currentProject]) {
+    projectMetaPanel.classList.add("hidden");
+    return;
+  }
+  projectMetaPanel.classList.remove("hidden");
+  const p = projects[currentProject];
+  projectMetaNameEl.textContent = currentProject;
+  projectDescriptionEl.value = p.meta.description || "";
+  if (metaCreatedEl)
+    metaCreatedEl.textContent = `Created: ${
+      p.meta.created_at ? new Date(p.meta.created_at).toLocaleDateString() : "-"
+    }`;
+  if (metaUpdatedEl)
+    metaUpdatedEl.textContent = `Updated: ${
+      p.meta.updated_at ? new Date(p.meta.updated_at).toLocaleDateString() : "-"
+    }`;
+}
+function saveProjectMeta() {
+  if (!currentProject) return;
+  projects[currentProject].meta.description = projectDescriptionEl.value;
+  projects[currentProject].meta.updated_at = new Date().toISOString();
+  window.api.saveProjects(projects);
+}
+function renameProject() {
+  if (!currentProject) return;
+  renameInput.value = currentProject;
+  renameModal.classList.remove("hidden");
+  renameInput.select();
+}
+async function confirmRename() {
+  const val = renameInput.value.trim();
+  if (!val || val === currentProject || projects[val]) {
+    renameModal.classList.add("hidden");
+    return;
+  }
+  projects[val] = projects[currentProject];
+  delete projects[currentProject];
+  await window.api.saveProjects(projects);
+  currentProject = val;
+  renameModal.classList.add("hidden");
+  renderProjects();
+}
+function toggleNewProjectBar() {
+  newProjectBar.classList.toggle("hidden");
+  if (!newProjectBar.classList.contains("hidden")) newProjectInput.focus();
+}
+function hideNewProjectBar() {
+  newProjectBar.classList.add("hidden");
+}
+function createProject() {
+  const name = newProjectInput.value.trim();
+  if (!name) return hideNewProjectBar();
+  if (!projects[name]) {
+    projects[name] = {
+      meta: { created_at: new Date().toISOString() },
+      files: [],
+    };
+    window.api.saveProjects(projects);
+    currentProject = name;
+    renderProjects();
+  }
+  hideNewProjectBar();
+}
+function onDeleteProject() {
+  if (!currentProject) return;
+  if (confirm(`Delete project "${currentProject}"?`)) {
+    delete projects[currentProject];
+    window.api.saveProjects(projects);
+    currentProject = null;
+    renderProjects();
+    renderFileList(false);
+  }
+}
 function saveNotes() {
   if (!currentFileHash) return;
   currentAnnotations.notes = notesBoxEl.value;
   window.api.saveAnnotations(currentFileHash, currentAnnotations);
 }
-
-// -------------------------------------------------------------
-// TAGS
-// -------------------------------------------------------------
-function makeTagChip(tag) {
+function makeTagChip(t) {
   const d = document.createElement("div");
   d.className = "tag";
-  d.innerHTML = `${tag} <span class="tag-x" data-t="${tag}">×</span>`;
+  d.innerHTML = `${t} <span class="tag-x">×</span>`;
   tagsContainerEl.appendChild(d);
-
-  d.querySelector(".tag-x").onclick = () => removeTag(tag);
+  d.querySelector(".tag-x").onclick = () => removeTag(t);
 }
-
 function addTag(t) {
   if (!currentProject || !currentFilePath) return;
-  const proj = projects[currentProject];
-  if (!proj) return;
-  const fileObj = (proj.files || []).find(
-    (f) => f.file_path === currentFilePath
+  const f = projects[currentProject].files.find(
+    (x) => x.file_path === currentFilePath
   );
-  if (!fileObj) return;
-  if (!fileObj.tags.includes(t)) {
-    fileObj.tags.push(t);
-    proj.meta.updated_at = new Date().toISOString();
+  if (f && !f.tags.includes(t)) {
+    f.tags.push(t);
     window.api.saveProjects(projects);
     makeTagChip(t);
   }
 }
-
 function removeTag(t) {
   if (!currentProject || !currentFilePath) return;
-  const proj = projects[currentProject];
-  if (!proj) return;
-  const fileObj = (proj.files || []).find(
-    (f) => f.file_path === currentFilePath
+  const f = projects[currentProject].files.find(
+    (x) => x.file_path === currentFilePath
   );
-  if (!fileObj) return;
-  fileObj.tags = fileObj.tags.filter((x) => x !== t);
-  proj.meta.updated_at = new Date().toISOString();
+  if (f) {
+    f.tags = f.tags.filter((x) => x !== t);
+    window.api.saveProjects(projects);
+    renderFileList(false);
+    loadFile({
+      project: currentProject,
+      file_path: currentFilePath,
+      tags: f.tags,
+    });
+  }
+}
+async function onAddFiles() {
+  if (!currentProject) return;
+  const paths = await window.api.pickFiles();
+  if (!paths.length) return;
+  const p = projects[currentProject];
+  paths.forEach((path) => {
+    if (!p.files.some((x) => x.file_path === path))
+      p.files.push({ file_path: path, tags: [] });
+  });
   window.api.saveProjects(projects);
   renderFileList(false);
-  loadFile({
-    project: currentProject,
-    file_path: fileObj.file_path,
-    tags: fileObj.tags,
-  });
 }
-
-// -------------------------------------------------------------
-// OPEN EXTERNALLY
-// -------------------------------------------------------------
-async function openExternally(filePath) {
-  const res = await window.api.openDefault(filePath);
-  if (!res || !res.ok) {
-    alert("Could not open file. It may have been moved or deleted.");
-  }
+function onRemoveFile() {
+  if (!currentProject || !currentFilePath) return;
+  const p = projects[currentProject];
+  p.files = p.files.filter((x) => x.file_path !== currentFilePath);
+  window.api.saveProjects(projects);
+  currentFilePath = null;
+  renderFileList(false);
+  previewBodyEl.innerHTML = "";
+}
+async function openExternally(p) {
+  window.api.openDefault(p);
+}
+async function onExportFileNotes() {
+  if (currentFilePath) window.api.exportFileNotes(currentFilePath);
+}
+async function onExportProjectNotes() {
+  if (currentProject) window.api.exportProjectNotes(currentProject);
 }
