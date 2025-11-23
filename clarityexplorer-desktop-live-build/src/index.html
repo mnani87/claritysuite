@@ -59,16 +59,22 @@
         <div id="top-bar">
           <div id="search-group">
             <div id="search-input-wrapper">
-              <input id="project-search" placeholder="Search filenames..." />
+              <input
+                id="project-search"
+                placeholder="Search names/tags in project..."
+              />
               <div
                 id="content-search-toggle"
-                title="Deep content search (Press Enter)"
+                title="Toggle deep content search (Press Enter to run)"
               >
                 <input type="checkbox" id="content-search-checkbox" />
                 <label for="content-search-checkbox">Abc</label>
               </div>
             </div>
-            <input id="global-search" placeholder="Global Tag Search..." />
+            <input
+              id="global-search"
+              placeholder="Search names/tags in all projects..."
+            />
           </div>
           <button id="theme-toggle-btn" title="Toggle light/dark">Theme</button>
           <button id="about-btn" title="About Clarity Explorer">About</button>
@@ -86,44 +92,53 @@
               <h3>Philosophy</h3>
               <p>
                 Clarity Explorer is a <strong>"Virtual Overlay"</strong> for
-                your file system. Unlike traditional file managers that force
-                you to move files into specific folders, Clarity lets you create
-                "Projects" that group files from anywhere on your hard drive
-                (Downloads, Documents, External Drives) without moving or
-                duplicating the originals.
-              </p>
-              <p>
-                It is built on the <strong>Local-First</strong> philosophy: your
-                data never leaves your machine, there is no cloud sync, and no
-                telemetry. You own your notes and your files.
+                your file system. Unlike traditional file managers, it lets you
+                create "Projects" that group files from anywhere on your hard
+                drive without moving or duplicating the originals. Your data
+                never leaves this machine.
               </p>
             </div>
 
             <div class="about-section">
               <h3>Workflow</h3>
               <dl>
-                <dt>1. Create a Project</dt>
-                <dd>Create a virtual bucket (e.g., "Thesis Research").</dd>
-
-                <dt>2. Add Files</dt>
+                <dt>1. Create & Add</dt>
                 <dd>
-                  Click <strong>+</strong> to add PDFs, Docs, Images, or Text.
-                  The original files stay exactly where they are on disk.
+                  Create a project and click <strong>+</strong> to add files.
+                  You can mix PDFs, Docs, and Text files from different folders.
                 </dd>
 
-                <dt>3. Read & Annotate</dt>
+                <dt>2. Split View</dt>
                 <dd>
-                  Use the <strong>Split View</strong> to read on top and write
-                  notes on the bottom. Notes are linked to the file's unique
-                  "Content Hash," so they survive even if you rename the file.
+                  Read on the top, write notes on the bottom. Notes are saved to
+                  a local JSON file and linked by content hash, so they survive
+                  file renames.
+                </dd>
+              </dl>
+            </div>
+
+            <div class="about-section">
+              <h3>Search & Tagging</h3>
+              <dl>
+                <dt>🏷️ Smart Grouping</dt>
+                <dd>
+                  Add tags (e.g., <code>#finance</code>) in the bottom right.
+                  The file list automatically groups files under "Folder"
+                  headers based on their tags.
                 </dd>
 
-                <dt>4. Deep Search</dt>
+                <dt>🔍 Project Search (Left Bar)</dt>
                 <dd>
-                  Toggle the <strong>Abc</strong> button in the sidebar search.
-                  Press <kbd>Enter</kbd> to scan the
-                  <em>actual text content</em>
-                  of every PDF, DOCX, and Text file in the project.
+                  Filters the current list by filename or tag. Toggle the
+                  <strong>Abc</strong> button and press <kbd>Enter</kbd> to
+                  switch to <strong>Deep Search</strong>, which scans the actual
+                  text content of every PDF, DOCX, and Text file in the project.
+                </dd>
+
+                <dt>🌍 Global Search (Right Bar)</dt>
+                <dd>
+                  Searches filenames and tags across <strong>all</strong> your
+                  projects at once.
                 </dd>
               </dl>
             </div>
@@ -149,18 +164,11 @@
                 </tr>
                 <tr>
                   <th><kbd>Enter</kbd></th>
-                  <td>Open file (if focused) / Trigger Deep Search</td>
+                  <td>Open file (if list focused) / Trigger Deep Search</td>
                 </tr>
                 <tr>
                   <th><kbd>Double Click</kbd></th>
                   <td>Open file in default system app</td>
-                </tr>
-                <tr>
-                  <th><kbd>⌘</kbd> / <kbd>Ctrl</kbd> + <kbd>F</kbd></th>
-                  <td>
-                    <strong>Inside File:</strong> Opens Find (Custom or Native
-                    PDF)
-                  </td>
                 </tr>
               </table>
             </div>
@@ -176,14 +184,15 @@
                   restored.
                 </li>
                 <li>
-                  <strong>OCR:</strong> Deep search supports PDF text, DOCX,
-                  TXT, MD, and HTML. It does <em>not</em> support scanned images
-                  (OCR).
+                  <strong>PDF Search:</strong> Click inside the PDF and use
+                  <kbd>Cmd</kbd>+<kbd>F</kbd> to use the native finder.
                 </li>
               </ul>
             </div>
 
-            <p class="about-footer">Version 0.5.0 • Secure • Offline</p>
+            <p class="about-footer">
+              ClarityExplorer v0.1 • Electron local-first • Personal use
+            </p>
           </div>
         </div>
 

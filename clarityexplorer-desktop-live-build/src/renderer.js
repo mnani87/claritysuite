@@ -230,9 +230,10 @@ if (projectSearchEl) {
 if (contentSearchCheckbox) {
   contentSearchCheckbox.onchange = () => {
     if (contentSearchCheckbox.checked) {
-      projectSearchEl.placeholder = "Search content (Press Enter)...";
+      projectSearchEl.placeholder =
+        "Search content in Project (Press Enter)...";
     } else {
-      projectSearchEl.placeholder = "Search filenames...";
+      projectSearchEl.placeholder = "Search names/tags in Project...";
       renderFileList(false);
     }
   };
@@ -362,9 +363,11 @@ function renderFileList(globalMode = false) {
   if (!fileListEl) return;
   fileListEl.innerHTML = "";
   currentFiles = [];
+
   const pf = projectSearchEl ? projectSearchEl.value.toLowerCase().trim() : "";
   const gf = globalSearchEl ? globalSearchEl.value.toLowerCase().trim() : "";
 
+  // 1. Gather Files
   let source = [];
   if (globalMode && gf) {
     Object.entries(projects).forEach(([pName, pObj]) => {
@@ -374,24 +377,86 @@ function renderFileList(globalMode = false) {
     source = projects[currentProject].files || [];
   }
 
+  // 2. Filter Files
+  const filtered = [];
   source.forEach((f) => {
     const base = window.api.path.basename(f.file_path);
     const tags = (f.tags || []).join(" ");
     const matchStr = (base + " " + tags).toLowerCase();
     const query = globalMode ? gf : pf;
+
     if (!query || matchStr.includes(query)) {
-      const item = { ...f, project: f.project || currentProject };
-      currentFiles.push(item);
+      filtered.push({ ...f, project: f.project || currentProject });
+    }
+  });
+  currentFiles = filtered; // Update state
+
+  // 3. Group Files
+  const groups = {};
+  const NO_GROUP_KEY = "UNTAGGED"; // Special key for sorting
+
+  filtered.forEach((f) => {
+    let groupKey = "";
+
+    if (globalMode) {
+      // In Global Search, group by Project Name
+      groupKey = f.project;
+    } else {
+      // In Project View, group by First Tag
+      if (f.tags && f.tags.length > 0) {
+        groupKey = f.tags[0].toUpperCase(); // Use first tag as folder
+      } else {
+        groupKey = NO_GROUP_KEY;
+      }
+    }
+
+    if (!groups[groupKey]) groups[groupKey] = [];
+    groups[groupKey].push(f);
+  });
+
+  // 4. Sort Groups (Alphabetical, but Untagged last)
+  const sortedKeys = Object.keys(groups).sort((a, b) => {
+    if (a === NO_GROUP_KEY) return 1;
+    if (b === NO_GROUP_KEY) return -1;
+    return a.localeCompare(b);
+  });
+
+  // 5. Render Groups
+  sortedKeys.forEach((key) => {
+    // Don't show header if it's the only group and it's "Untagged" (cleaner empty state)
+    const showHeader = sortedKeys.length > 1 || key !== NO_GROUP_KEY;
+
+    if (showHeader) {
+      const header = document.createElement("li");
+      header.className = "group-header";
+      // Visual icon based on mode
+      const icon = globalMode ? "📂" : "🏷️";
+      header.textContent = `${icon} ${key}`;
+      fileListEl.appendChild(header);
+    }
+
+    groups[key].forEach((item) => {
+      const base = window.api.path.basename(item.file_path);
       const li = document.createElement("li");
+      li.className = "file-item"; // New class for indentation
       li.textContent = base;
+
+      // Highlight if currently active
+      if (currentFilePath === item.file_path) {
+        li.classList.add("selected");
+      }
+
       li.onclick = () => {
-        [...fileListEl.children].forEach((c) => c.classList.remove("selected"));
+        [...fileListEl.querySelectorAll("li.file-item")].forEach((c) =>
+          c.classList.remove("selected")
+        );
         li.classList.add("selected");
         loadFile(item);
       };
       li.ondblclick = () => openExternally(item.file_path);
+
       fileListEl.appendChild(li);
-    }
+    });
   });
 }
 

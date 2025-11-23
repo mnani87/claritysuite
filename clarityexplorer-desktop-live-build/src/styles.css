@@ -262,7 +262,6 @@ body.resizing-v {
   font-weight: 500;
 }
 
-/* Search Results in Sidebar */
 .search-result-item {
   display: flex;
   flex-direction: column;
@@ -288,6 +287,7 @@ body.resizing-v {
   background: var(--sidebar-meta-bg);
   flex-shrink: 0;
   padding: 1rem;
+  animation: fadeIn 0.3s ease;
 }
 #project-meta-inner {
   display: flex;
@@ -370,12 +370,15 @@ body.resizing-v {
 }
 
 /* MAIN */
+/* FIX: Add relative positioning to main so absolute children stick to it */
 #main {
   flex: 1;
   display: flex;
   flex-direction: column;
   min-width: 0;
+  position: relative;
 }
+
 #top-bar {
   display: flex;
   align-items: center;
@@ -387,7 +390,7 @@ body.resizing-v {
 }
 
 #search-group {
-  flex: 2;
+  flex: 3;
   display: flex;
   gap: 0.8rem;
 }
@@ -441,7 +444,7 @@ body.resizing-v {
 }
 
 #global-search {
-  flex: 1;
+  flex: 1.2;
   border-radius: 999px;
   padding: 0.4rem 0.9rem;
   border: 1px solid var(--line);
@@ -465,14 +468,20 @@ body.resizing-v {
   cursor: pointer;
   transition: all 0.2s;
 }
+
+/* FIX: ABOUT PANEL OVERLAY */
 #about-panel {
-  border-bottom: 1px solid var(--line);
-  background: var(--sidebar-bg);
-  max-height: 85vh;
+  position: absolute;
+  top: 3.5rem; /* Sit below the top bar */
+  left: 0;
+  right: 0;
+  max-height: calc(100vh - 100px); /* Ensure it fits on screen */
   overflow-y: auto;
-  flex-shrink: 0;
+  z-index: 50; /* Sit on top of content */
+  background: var(--sidebar-bg);
+  border-bottom: 1px solid var(--line);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
   animation: slideDown 0.2s ease-out;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 @keyframes slideDown {
   from {
@@ -484,6 +493,7 @@ body.resizing-v {
     opacity: 1;
   }
 }
+
 #about-inner {
   max-width: 800px;
   margin: 0 auto;
@@ -517,6 +527,46 @@ body.resizing-v {
   text-align: center;
   border-top: 1px solid var(--line);
   padding-top: 1rem;
+}
+
+dt {
+  font-weight: bold;
+  color: var(--accent);
+  margin-top: 0.8rem;
+  font-family: var(--font-ui);
+}
+dd {
+  margin-left: 0;
+  margin-bottom: 0.5rem;
+  padding-left: 1rem;
+  border-left: 2px solid var(--line);
+}
+
+.shortcuts-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+.shortcuts-table th {
+  text-align: left;
+  padding: 0.4rem 0;
+  width: 140px;
+  color: var(--ink);
+  font-weight: normal;
+}
+.shortcuts-table td {
+  padding: 0.4rem 0;
+  color: var(--ink-dim);
+}
+kbd {
+  background: var(--tag-bg);
+  border: 1px solid var(--tag-border);
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-family: var(--font-ui);
+  font-size: 0.75rem;
+  color: var(--tag-text);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.2);
 }
 
 #layout {
