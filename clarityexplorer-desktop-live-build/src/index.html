@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Clarity Explorer</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div id="shell">
+      <!-- SIDEBAR -->
+      <aside id="sidebar">
+        <div id="sidebar-top">
+          <div id="brand">
+            <div id="brand-icon"></div>
+            <div>
+              <div id="brand-title">Clarity Explorer</div>
+              <div id="brand-sub">Project views over your real files</div>
+            </div>
+          </div>
+          <button id="add-project-btn">＋</button>
+        </div>
+
+        <!-- inline project creation -->
+        <div id="new-project-bar" class="hidden">
+          <input id="new-project-input" placeholder="New project name…" />
+          <button id="new-project-create">Create</button>
+          <button id="new-project-cancel">✕</button>
+        </div>
+
+        <!-- project list -->
+        <ul id="project-list"></ul>
+
+        <!-- delete project (never touches disk files) -->
+        <div id="delete-project-bar">
+          <button id="delete-project-btn">Delete Project</button>
+        </div>
+      </aside>
+
+      <!-- MAIN -->
+      <main id="main">
+        <div id="top-bar">
+          <input
+            id="project-search"
+            placeholder="Search filenames/tags in project…"
+          />
+          <input
+            id="global-search"
+            placeholder="Search filenames/tags everywhere…"
+          />
+        </div>
+
+        <div id="layout">
+          <!-- LEFT PANEL: FILES -->
+          <section id="files-panel" class="panel">
+            <header class="panel-header">
+              <span>Files</span>
+              <div class="panel-buttons">
+                <button id="add-file-btn">Add Files</button>
+                <button id="remove-file-btn">Remove File</button>
+              </div>
+            </header>
+            <ul id="file-list"></ul>
+          </section>
+
+          <!-- RIGHT PANEL: PREVIEW -->
+          <section id="preview-panel" class="panel">
+            <header class="panel-header">
+              <span id="preview-title"></span>
+              <div class="panel-buttons">
+                <button id="export-file-notes-btn">Export Notes (File)</button>
+                <button id="export-project-notes-btn">
+                  Export Notes (Project)
+                </button>
+              </div>
+            </header>
+
+            <div id="preview-area">
+              <div id="preview-body"></div>
+
+              <!-- Notes -->
+              <div id="notes-header">Notes</div>
+              <textarea id="notes-box"></textarea>
+
+              <!-- Tags -->
+              <div id="tags-header">Tags</div>
+              <div id="tags-container"></div>
+              <input id="tag-input" placeholder="Add tag…" />
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <script src="renderer.js"></script>
+  </body>
+</html>
